@@ -21,7 +21,6 @@ wheels/
 *.egg
 
 # Virtual environments
-.env
 .venv
 env/
 venv/
@@ -56,12 +55,11 @@ checkpoints/
 *.safetensors
 
 # Secrets
-.env
 .env.*
 secrets.json
 
 # Internal planning docs
-docs/
+docs/private/
 
 # Runtime artifacts
 outputs/

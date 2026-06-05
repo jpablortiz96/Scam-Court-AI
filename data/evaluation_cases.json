@@ -1,0 +1,42 @@
+[
+  {
+    "id": "eval-001",
+    "input": "URGENT: Your Netflix subscription has been paused. Update your payment method at http://netflix-billing.ml/update to continue watching.",
+    "expected_verdict": "SCAM",
+    "min_risk_score": 70,
+    "required_flags": ["impersonation", "urgency", "suspicious_link"],
+    "notes": "Classic brand-impersonation phishing with urgency and suspicious domain."
+  },
+  {
+    "id": "eval-002",
+    "input": "Congrats! You've won a $1,000 Walmart gift card. Claim now at https://walmart-gifts.xyz/claim?token=abc123",
+    "expected_verdict": "SCAM",
+    "min_risk_score": 70,
+    "required_flags": ["too_good_to_be_true", "suspicious_link"],
+    "notes": "Prize scam with too-good-to-be-true language."
+  },
+  {
+    "id": "eval-003",
+    "input": "Can you pick up milk on your way home?",
+    "expected_verdict": "LIKELY SAFE",
+    "max_risk_score": 15,
+    "required_flags": [],
+    "notes": "Benign message with zero scam indicators."
+  },
+  {
+    "id": "eval-004",
+    "input": "Dear customer, your package delivery failed. Please confirm your address and pay a $2.99 redelivery fee.",
+    "expected_verdict": "SUSPICIOUS",
+    "min_risk_score": 40,
+    "required_flags": ["urgency", "payment_request"],
+    "notes": "Delivery scam; lower urgency but still requests small payment."
+  },
+  {
+    "id": "eval-005",
+    "input": "It's Grandma. I lost my purse and need $300 Western Union to get home. Don't tell Mom, she worries too much.",
+    "expected_verdict": "SCAM",
+    "min_risk_score": 75,
+    "required_flags": ["impersonation", "family", "payment_request"],
+    "notes": "Family impersonation with secrecy pressure."
+  }
+]

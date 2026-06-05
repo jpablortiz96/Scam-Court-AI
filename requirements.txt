@@ -1,0 +1,20 @@
+# Scam Court AI — Python dependencies
+# Minimum: Python 3.10+
+
+# UI
+gradio>=4.0.0
+
+# Data handling (std lib covers most, but keep explicit for future)
+# typing-extensions only needed for <3.11
+typing-extensions>=4.5.0; python_version<"3.11"
+
+# Future model backends (install when ready, not required for heuristic MVP)
+# transformers>=4.40.0
+# accelerate>=0.30.0
+# torch>=2.2.0
+# pillow>=10.0.0  # For vision screenshots later
+
+# Dev / test (optional)
+# pytest>=8.0.0
+# black>=24.0.0
+# ruff>=0.4.0

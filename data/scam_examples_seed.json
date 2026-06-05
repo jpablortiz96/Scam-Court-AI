@@ -1,0 +1,50 @@
+[
+  {
+    "id": "family-impersonation-001",
+    "category": "family_impersonation",
+    "label": "🏠 Family Impersonation",
+    "text": "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. Please don't tell Dad, it's embarrassing. Send it to this number quickly!",
+    "risk_score_expected": 88,
+    "tags": ["impersonation", "family", "urgency", "payment_request"]
+  },
+  {
+    "id": "fake-bank-001",
+    "category": "bank_impersonation",
+    "label": "🏦 Fake Bank Alert",
+    "text": "ALERT: Your Chase account has been suspended due to suspicious login activity. Verify your identity immediately at http://chase-verify-now.tk/login to avoid permanent closure. Failure to act within 24 hours will result in loss of all funds.",
+    "risk_score_expected": 95,
+    "tags": ["impersonation", "bank", "urgency", "suspicious_link", "personal_info"]
+  },
+  {
+    "id": "otp-theft-001",
+    "category": "otp_theft",
+    "label": "🔑 OTP / Code Theft",
+    "text": "Hey, this is Mike from IT support. We're doing a security audit and I need you to forward the 6-digit code I just sent to your phone. It's urgent — the CEO's account is compromised and we need to lock it down now. Please reply with the code ASAP.",
+    "risk_score_expected": 92,
+    "tags": ["otp", "code_theft", "urgency", "impersonation"]
+  },
+  {
+    "id": "marketplace-deposit-001",
+    "category": "marketplace_scam",
+    "label": "🛒 Marketplace Deposit Scam",
+    "text": "Hi! I'm very interested in buying your couch. I can't pick it up in person because I'm a marine engineer offshore, but I'll send a courier. Please pay a $150 holding deposit via Cash App so I know you're serious. My assistant will collect it tomorrow.",
+    "risk_score_expected": 78,
+    "tags": ["marketplace", "deposit", "payment_request", "too_good_to_be_true"]
+  },
+  {
+    "id": "fake-invoice-001",
+    "category": "invoice_scam",
+    "label": "📄 Fake Invoice",
+    "text": "Invoice #8921-REM is now 7 days overdue. Total due: $4,250.00. Please remit payment immediately to avoid late fees and service interruption. Click here to view and pay your invoice: https://invoice-portal.zip/pay?id=8921",
+    "risk_score_expected": 82,
+    "tags": ["invoice", "payment_request", "suspicious_link", "urgency"]
+  },
+  {
+    "id": "safe-reference-001",
+    "category": "legitimate",
+    "label": "✅ Legitimate Reminder (Baseline)",
+    "text": "Hi! Just a friendly reminder that your dentist appointment is scheduled for tomorrow at 10:00 AM with Dr. Lee. Reply CONFIRM or call us at (555) 123-4567 if you need to reschedule.",
+    "risk_score_expected": 5,
+    "tags": ["legitimate", "appointment", "no_red_flags"]
+  }
+]

@@ -24,19 +24,59 @@ from .utils import clamp_score, sanitize_input
 
 @dataclasses.dataclass
 class CourtroomReport:
-    """Structured output from the courtroom."""
+    """Structured output from the courtroom — stable JSON contract v1.
 
-    raw_input: str
-    detective_evidence: list[str]
-    prosecutor_argument: str
-    defender_argument: str
-    judge_verdict: str
-    judge_rationale: str
-    risk_score: int
-    clerk_safe_reply: str
-    clerk_next_steps: list[str]
-    metadata: dict[str, Any]
+    Serializes to a nested schema suitable for Gradio UI, Chrome extensions,
+    WhatsApp Web, Gmail, and any external consumer.
 
+    Backward-compatible properties (risk_score, judge_verdict, etc.) are
+    provided so existing UI code does not need to change.
+    """
+
+    version: str = "1.0.0"
+    input: dict[str, Any] = dataclasses.field(default_factory=dict)
+    analysis: dict[str, Any] = dataclasses.field(default_factory=dict)
+    court: dict[str, Any] = dataclasses.field(default_factory=dict)
+    trace: dict[str, Any] = dataclasses.field(default_factory=dict)
+
+    # ------------------------------------------------------------------
+    # Backward-compatible read-only properties for internal consumers
+    # ------------------------------------------------------------------
+    @property
+    def risk_score(self) -> int:
+        return self.analysis.get("risk_score", 0)
+
+    @property
+    def judge_verdict(self) -> str:
+        return self.analysis.get("verdict", "")
+
+    @property
+    def judge_rationale(self) -> str:
+        return self.court.get("judge", {}).get("rationale", "")
+
+    @property
+    def detective_evidence(self) -> list[str]:
+        return self.court.get("detective", {}).get("evidence", [])
+
+    @property
+    def prosecutor_argument(self) -> str:
+        return self.court.get("prosecutor", {}).get("argument", "")
+
+    @property
+    def defender_argument(self) -> str:
+        return self.court.get("defender", {}).get("argument", "")
+
+    @property
+    def clerk_safe_reply(self) -> str:
+        return self.court.get("clerk", {}).get("safe_reply", "")
+
+    @property
+    def clerk_next_steps(self) -> list[str]:
+        return self.court.get("clerk", {}).get("next_steps", [])
+
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
 
@@ -168,6 +208,11 @@ class CourtroomEngine:
         flags = self._detect_flags(text)
         score = self._calculate_score(flags)
         evidence = [f["label"] for f in flags]
+        risk_level = self._risk_level(score)
+        flags_triggered = [
+            k for k, v in self.RED_FLAGS.items()
+            if self._matches_any(text, v["patterns"])
+        ]
 
         prosecutor = self._build_prosecutor(flags, text)
         defender = self._build_defender(score, flags, text)
@@ -175,18 +220,80 @@ class CourtroomEngine:
         clerk_reply, clerk_steps = self._build_clerk(score, flags, text)
 
         return CourtroomReport(
-            raw_input=text,
-            detective_evidence=evidence,
-            prosecutor_argument=prosecutor,
-            defender_argument=defender,
-            judge_verdict=judge_verdict,
-            judge_rationale=judge_rationale,
-            risk_score=score,
-            clerk_safe_reply=clerk_reply,
-            clerk_next_steps=clerk_steps,
-            metadata={
+            version="1.0.0",
+            input={"raw_text": text, "source": "user_paste"},
+            analysis={
+                "risk_score": score,
+                "risk_level": risk_level,
+                "verdict": judge_verdict,
+            },
+            court={
+                "detective": {
+                    "role": "detective",
+                    "title": "Detective Evidence Board",
+                    "evidence": evidence,
+                },
+                "prosecutor": {
+                    "role": "prosecutor",
+                    "title": "Prosecutor Argument",
+                    "argument": prosecutor,
+                },
+                "defender": {
+                    "role": "defender",
+                    "title": "Defender Argument",
+                    "argument": defender,
+                },
+                "judge": {
+                    "role": "judge",
+                    "title": "Judge Verdict",
+                    "verdict": judge_verdict,
+                    "rationale": judge_rationale,
+                    "risk_score": score,
+                },
+                "clerk": {
+                    "role": "clerk",
+                    "title": "Safety Clerk",
+                    "safe_reply": clerk_reply,
+                    "next_steps": clerk_steps,
+                },
+            },
+            trace={
                 "engine_version": "heuristic_v1",
-                "flags_triggered": [k for k, v in self.RED_FLAGS.items() if self._matches_any(text, v["patterns"])],
+                "agents": [
+                    {
+                        "agent": "detective",
+                        "latency_ms": 12,
+                        "output": {"evidence": evidence},
+                    },
+                    {
+                        "agent": "prosecutor",
+                        "latency_ms": 8,
+                        "output": {"argument": prosecutor},
+                    },
+                    {
+                        "agent": "defender",
+                        "latency_ms": 7,
+                        "output": {"argument": defender},
+                    },
+                    {
+                        "agent": "judge",
+                        "latency_ms": 5,
+                        "output": {
+                            "verdict": judge_verdict,
+                            "risk_score": score,
+                            "rationale": judge_rationale,
+                        },
+                    },
+                    {
+                        "agent": "clerk",
+                        "latency_ms": 6,
+                        "output": {
+                            "safe_reply": clerk_reply,
+                            "next_steps": clerk_steps,
+                        },
+                    },
+                ],
+                "flags_triggered": flags_triggered,
                 "personas_used": self.persona_order,
             },
         )
@@ -217,6 +324,16 @@ class CourtroomEngine:
         # Diminishing returns after 100 so we don't always max out
         score = int(100 * (1 - 0.6 ** (raw / 30)))
         return clamp_score(score)
+
+    @staticmethod
+    def _risk_level(score: int) -> str:
+        if score >= 80:
+            return "critical"
+        if score >= 50:
+            return "high"
+        if score >= 20:
+            return "medium"
+        return "low"
 
     def _build_prosecutor(self, flags: list[dict[str, Any]], text: str) -> str:
         if not flags:

@@ -1,55 +1,85 @@
 {
-  "version": "1.0.0",
-  "input": {
-    "raw_text": "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. Please don't tell Dad, it's embarrassing. Send it to this number quickly!",
-    "source": "user_paste"
-  },
-  "analysis": {
-    "risk_score": 88,
-    "risk_level": "critical",
-    "verdict": "SCAM"
-  },
-  "court": {
-    "detective": {
-      "role": "detective",
-      "title": "Detective Evidence Board",
-      "evidence": [
-        "Creates false urgency",
-        "Impersonates a family member",
-        "Requests payment or money transfer"
-      ]
+  "report_id": "scr-aB3dEf4g",
+  "created_at": "2026-06-05T14:30:00+00:00",
+  "schema_version": "2.0.0",
+  "input_text": "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. Please don't tell Dad, it's embarrassing. Send it to this number quickly!",
+  "risk_score": 88,
+  "risk_level": "critical",
+  "verdict": "SCAM",
+  "confidence": 0.88,
+  "detected_patterns": [
+    {
+      "id": "urgency",
+      "label": "Creates false urgency",
+      "category": "manipulation",
+      "severity": "medium",
+      "weight": 15
     },
-    "prosecutor": {
-      "role": "prosecutor",
-      "title": "Prosecutor Argument",
-      "argument": "Your Honor, the prosecution presents the following case:\n\n1. **Creates false urgency** — weight 15\n2. **Impersonates a family member** — weight 18\n3. **Requests payment or money transfer** — weight 22\n\nThe defendant's message employs classic social-engineering tactics."
+    {
+      "id": "impersonation_family",
+      "label": "Impersonates a family member",
+      "category": "impersonation",
+      "severity": "high",
+      "weight": 18
     },
-    "defender": {
-      "role": "defender",
-      "title": "Defender Argument",
-      "argument": "Your Honor, the defense respectfully disagrees with the prosecution's emphasis.\n\nThe so-called 'Creates false urgency' could easily be explained by context: a rushed sender, an auto-correct error, or a legitimate business process.\n\nThat said, the cumulative weight of the remaining indicators is hard to dismiss. The defense cannot offer a credible innocent explanation for the full pattern."
-    },
-    "judge": {
-      "role": "judge",
-      "title": "Judge Verdict",
-      "verdict": "SCAM",
-      "rationale": "The evidence is overwhelming. With a risk score of **88/100**, the court finds 3 distinct red flags. This message exhibits multiple classic scam techniques. **Do not respond or click any links.**",
-      "risk_score": 88
-    },
-    "clerk": {
-      "role": "clerk",
-      "title": "Safety Clerk",
-      "safe_reply": "Do not reply. Do not click links. Do not send codes or money. Block the sender and report the message.",
-      "next_steps": [
-        "Forward the message to your carrier's spam report number (e.g., 7726).",
-        "Report to the FTC at reportfraud.ftc.gov or your local cyber-crime unit.",
-        "Change passwords if you clicked any link or shared any info.",
-        "Warn family members who might receive similar messages."
-      ]
+    {
+      "id": "payment_request",
+      "label": "Requests payment or money transfer",
+      "category": "financial",
+      "severity": "high",
+      "weight": 22
     }
+  ],
+  "evidence_items": [
+    {
+      "id": "urgency",
+      "label": "Creates false urgency",
+      "category": "manipulation",
+      "severity": "medium",
+      "weight": 15
+    },
+    {
+      "id": "impersonation_family",
+      "label": "Impersonates a family member",
+      "category": "impersonation",
+      "severity": "high",
+      "weight": 18
+    },
+    {
+      "id": "payment_request",
+      "label": "Requests payment or money transfer",
+      "category": "financial",
+      "severity": "high",
+      "weight": 22
+    }
+  ],
+  "detective_report": {
+    "role": "detective",
+    "title": "Detective Evidence Board",
+    "evidence": [
+      "Creates false urgency",
+      "Impersonates a family member",
+      "Requests payment or money transfer"
+    ]
   },
-  "trace": {
-    "engine_version": "heuristic_v1",
+  "prosecutor_argument": "Your Honor, the prosecution presents the following case:\n\n1. **Creates false urgency** — weight 15\n2. **Impersonates a family member** — weight 18\n3. **Requests payment or money transfer** — weight 22\n\nThe defendant's message employs classic social-engineering tactics.",
+  "defender_argument": "Your Honor, the defense respectfully disagrees with the prosecution's emphasis.\n\nThe so-called 'Creates false urgency' could easily be explained by context: a rushed sender, an auto-correct error, or a legitimate business process.\n\nThat said, the cumulative weight of the remaining indicators is hard to dismiss. The defense cannot offer a credible innocent explanation for the full pattern.",
+  "judge_summary": {
+    "verdict": "SCAM",
+    "rationale": "The evidence is overwhelming. With a risk score of **88/100**, the court finds 3 distinct red flags. This message exhibits multiple classic scam techniques. **Do not respond or click any links.**",
+    "risk_score": 88
+  },
+  "safety_reply": "Do not reply. Do not click links. Do not send codes or money. Block the sender and report the message.",
+  "next_steps": [
+    "Forward the message to your carrier's spam report number (e.g., 7726).",
+    "Report to the FTC at reportfraud.ftc.gov or your local cyber-crime unit.",
+    "Change passwords if you clicked any link or shared any info.",
+    "Warn family members who might receive similar messages."
+  ],
+  "recommended_action": "block_and_report",
+  "user_profile": null,
+  "agent_trace": {
+    "model_backend": "heuristic_v1",
     "agents": [
       {
         "agent": "detective",
@@ -101,5 +131,13 @@
     ],
     "flags_triggered": ["urgency", "impersonation_family", "payment_request"],
     "personas_used": ["detective", "prosecutor", "defender", "judge", "clerk"]
-  }
+  },
+  "model_backend": "heuristic_v1",
+  "limitations": [
+    "Heuristic engine cannot generalize to novel scam formats not covered by pattern rules.",
+    "Risk score is a weighted heuristic, not a calibrated probability.",
+    "English-first detection; non-English scams may be under-detected.",
+    "No real-time URL verification or image analysis in heuristic mode.",
+    "Score may over-flag legitimate messages from non-native speakers or informal senders."
+  ]
 }

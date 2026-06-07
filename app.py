@@ -470,27 +470,26 @@ def _render_role(role: str, report_dict: dict | None) -> str:
         "clerk": "Helpful, calm, actionable",
     }
 
-    court = report_dict.get("court", {})
     if role == "detective":
-        evidence = court.get("detective", {}).get("evidence", [])
+        evidence = report_dict.get("detective_report", {}).get("evidence", [])
         if not evidence:
             content = "<p><em>No red flags detected.</em></p>"
         else:
             items = "".join(f"<li>{html.escape(e)}</li>" for e in evidence)
             content = f"<ul>{items}</ul>"
     elif role == "prosecutor":
-        text = court.get("prosecutor", {}).get("argument", "").replace("\n", "<br>")
+        text = report_dict.get("prosecutor_argument", "").replace("\n", "<br>")
         content = f"<p>{text}</p>"
     elif role == "defender":
-        text = court.get("defender", {}).get("argument", "").replace("\n", "<br>")
+        text = report_dict.get("defender_argument", "").replace("\n", "<br>")
         content = f"<p>{text}</p>"
     elif role == "judge":
-        verdict = html.escape(court.get("judge", {}).get("verdict", ""))
-        rationale = court.get("judge", {}).get("rationale", "").replace("\n", "<br>")
+        verdict = html.escape(report_dict.get("judge_summary", {}).get("verdict", ""))
+        rationale = report_dict.get("judge_summary", {}).get("rationale", "").replace("\n", "<br>")
         content = f"<p><strong>{verdict}</strong></p><p>{rationale}</p>"
     else:  # clerk
-        reply = html.escape(court.get("clerk", {}).get("safe_reply", ""))
-        steps = court.get("clerk", {}).get("next_steps", [])
+        reply = html.escape(report_dict.get("safety_reply", ""))
+        steps = report_dict.get("next_steps", [])
         content = f"<p><strong>Safe Reply</strong></p><p>{reply}</p>"
         if steps:
             items = "".join(f"<li>{html.escape(s)}</li>" for s in steps)

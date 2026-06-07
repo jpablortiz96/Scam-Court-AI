@@ -14,8 +14,10 @@ Design rules:
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import json
 import re
+import secrets
 from typing import Any
 
 from .personas import PERSONAS, PERSONA_ORDER
@@ -24,55 +26,58 @@ from .utils import clamp_score, sanitize_input
 
 @dataclasses.dataclass
 class CourtroomReport:
-    """Structured output from the courtroom — stable JSON contract v1.
+    """Integration-ready analysis report — stable JSON contract v2.
 
-    Serializes to a nested schema suitable for Gradio UI, Chrome extensions,
-    WhatsApp Web, Gmail, and any external consumer.
+    Designed to power Gradio UI, Chrome extensions, WhatsApp Web, Gmail,
+    customer-support workflows, and any external system.
 
-    Backward-compatible properties (risk_score, judge_verdict, etc.) are
-    provided so existing UI code does not need to change.
+    Backward-compatible properties preserve existing UI consumption patterns.
     """
 
-    version: str = "1.0.0"
-    input: dict[str, Any] = dataclasses.field(default_factory=dict)
-    analysis: dict[str, Any] = dataclasses.field(default_factory=dict)
-    court: dict[str, Any] = dataclasses.field(default_factory=dict)
-    trace: dict[str, Any] = dataclasses.field(default_factory=dict)
+    report_id: str
+    created_at: str
+    schema_version: str
+    input_text: str
+    risk_score: int
+    risk_level: str
+    verdict: str
+    confidence: float
+    detected_patterns: list[dict[str, Any]]
+    evidence_items: list[dict[str, Any]]
+    detective_report: dict[str, Any]
+    prosecutor_argument: str
+    defender_argument: str
+    judge_summary: dict[str, Any]
+    safety_reply: str
+    next_steps: list[str]
+    recommended_action: str
+    user_profile: dict[str, Any] | None
+    agent_trace: dict[str, Any]
+    model_backend: str
+    limitations: list[str]
 
     # ------------------------------------------------------------------
-    # Backward-compatible read-only properties for internal consumers
+    # Backward-compatible read-only properties
     # ------------------------------------------------------------------
-    @property
-    def risk_score(self) -> int:
-        return self.analysis.get("risk_score", 0)
-
     @property
     def judge_verdict(self) -> str:
-        return self.analysis.get("verdict", "")
+        return self.verdict
 
     @property
     def judge_rationale(self) -> str:
-        return self.court.get("judge", {}).get("rationale", "")
+        return self.judge_summary.get("rationale", "")
 
     @property
     def detective_evidence(self) -> list[str]:
-        return self.court.get("detective", {}).get("evidence", [])
-
-    @property
-    def prosecutor_argument(self) -> str:
-        return self.court.get("prosecutor", {}).get("argument", "")
-
-    @property
-    def defender_argument(self) -> str:
-        return self.court.get("defender", {}).get("argument", "")
+        return self.detective_report.get("evidence", [])
 
     @property
     def clerk_safe_reply(self) -> str:
-        return self.court.get("clerk", {}).get("safe_reply", "")
+        return self.safety_reply
 
     @property
     def clerk_next_steps(self) -> list[str]:
-        return self.court.get("clerk", {}).get("next_steps", [])
+        return self.next_steps
 
     # ------------------------------------------------------------------
     # Serialization
@@ -198,6 +203,15 @@ class CourtroomEngine:
         "communication, but the user should still verify the sender independently."
     )
 
+    # Known limitations exposed to every consumer
+    LIMITATIONS: list[str] = [
+        "Heuristic engine cannot generalize to novel scam formats not covered by pattern rules.",
+        "Risk score is a weighted heuristic, not a calibrated probability.",
+        "English-first detection; non-English scams may be under-detected.",
+        "No real-time URL verification or image analysis in heuristic mode.",
+        "Score may over-flag legitimate messages from non-native speakers or informal senders.",
+    ]
+
     def __init__(self) -> None:
         self.personas = PERSONAS
         self.persona_order = PERSONA_ORDER
@@ -219,83 +233,67 @@ class CourtroomEngine:
         judge_verdict, judge_rationale = self._build_judge(score, flags)
         clerk_reply, clerk_steps = self._build_clerk(score, flags, text)
 
+        # Build structured patterns + evidence
+        detected_patterns = []
+        evidence_items = []
+        for f in flags:
+            severity = "high" if f["weight"] >= 20 else "medium" if f["weight"] >= 15 else "low"
+            entry = {
+                "id": f["key"],
+                "label": f["label"],
+                "category": "manipulation" if f["key"] in ("urgency", "too_good_to_be_true") else "impersonation" if "impersonation" in f["key"] else "theft" if f["key"] == "otp_theft" else "financial" if f["key"] in ("payment_request", "marketplace_deposit", "invoice_scam") else "technical",
+                "severity": severity,
+                "weight": f["weight"],
+            }
+            detected_patterns.append(entry)
+            evidence_items.append(entry)
+
+        confidence = self._confidence(score)
+        recommended_action = self._recommended_action(score)
+        report_id = f"scr-{secrets.token_urlsafe(6)}"
+        created_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
         return CourtroomReport(
-            version="1.0.0",
-            input={"raw_text": text, "source": "user_paste"},
-            analysis={
-                "risk_score": score,
-                "risk_level": risk_level,
+            report_id=report_id,
+            created_at=created_at,
+            schema_version="2.0.0",
+            input_text=text,
+            risk_score=score,
+            risk_level=risk_level,
+            verdict=judge_verdict,
+            confidence=confidence,
+            detected_patterns=detected_patterns,
+            evidence_items=evidence_items,
+            detective_report={
+                "role": "detective",
+                "title": "Detective Evidence Board",
+                "evidence": evidence,
+            },
+            prosecutor_argument=prosecutor,
+            defender_argument=defender,
+            judge_summary={
                 "verdict": judge_verdict,
+                "rationale": judge_rationale,
+                "risk_score": score,
             },
-            court={
-                "detective": {
-                    "role": "detective",
-                    "title": "Detective Evidence Board",
-                    "evidence": evidence,
-                },
-                "prosecutor": {
-                    "role": "prosecutor",
-                    "title": "Prosecutor Argument",
-                    "argument": prosecutor,
-                },
-                "defender": {
-                    "role": "defender",
-                    "title": "Defender Argument",
-                    "argument": defender,
-                },
-                "judge": {
-                    "role": "judge",
-                    "title": "Judge Verdict",
-                    "verdict": judge_verdict,
-                    "rationale": judge_rationale,
-                    "risk_score": score,
-                },
-                "clerk": {
-                    "role": "clerk",
-                    "title": "Safety Clerk",
-                    "safe_reply": clerk_reply,
-                    "next_steps": clerk_steps,
-                },
-            },
-            trace={
-                "engine_version": "heuristic_v1",
+            safety_reply=clerk_reply,
+            next_steps=clerk_steps,
+            recommended_action=recommended_action,
+            user_profile=None,
+            agent_trace={
+                "model_backend": "heuristic_v1",
                 "agents": [
-                    {
-                        "agent": "detective",
-                        "latency_ms": 12,
-                        "output": {"evidence": evidence},
-                    },
-                    {
-                        "agent": "prosecutor",
-                        "latency_ms": 8,
-                        "output": {"argument": prosecutor},
-                    },
-                    {
-                        "agent": "defender",
-                        "latency_ms": 7,
-                        "output": {"argument": defender},
-                    },
-                    {
-                        "agent": "judge",
-                        "latency_ms": 5,
-                        "output": {
-                            "verdict": judge_verdict,
-                            "risk_score": score,
-                            "rationale": judge_rationale,
-                        },
-                    },
-                    {
-                        "agent": "clerk",
-                        "latency_ms": 6,
-                        "output": {
-                            "safe_reply": clerk_reply,
-                            "next_steps": clerk_steps,
-                        },
-                    },
+                    {"agent": "detective", "latency_ms": 12, "output": {"evidence": evidence}},
+                    {"agent": "prosecutor", "latency_ms": 8, "output": {"argument": prosecutor}},
+                    {"agent": "defender", "latency_ms": 7, "output": {"argument": defender}},
+                    {"agent": "judge", "latency_ms": 5, "output": {"verdict": judge_verdict, "risk_score": score, "rationale": judge_rationale}},
+                    {"agent": "clerk", "latency_ms": 6, "output": {"safe_reply": clerk_reply, "next_steps": clerk_steps}},
                 ],
                 "flags_triggered": flags_triggered,
                 "personas_used": self.persona_order,
             },
+            model_backend="heuristic_v1",
+            limitations=list(self.LIMITATIONS),
         )
 
     # ------------------------------------------------------------------
@@ -334,6 +332,20 @@ class CourtroomEngine:
         if score >= 20:
             return "medium"
         return "low"
+
+    @staticmethod
+    def _confidence(score: int) -> float:
+        return round(min(0.97, max(0.25, 0.25 + (score / 100) * 0.72)), 2)
+
+    @staticmethod
+    def _recommended_action(score: int) -> str:
+        if score >= 80:
+            return "block_and_report"
+        if score >= 50:
+            return "verify_independently"
+        if score >= 20:
+            return "pause_and_verify"
+        return "standard_caution"
 
     def _build_prosecutor(self, flags: list[dict[str, Any]], text: str) -> str:
         if not flags:

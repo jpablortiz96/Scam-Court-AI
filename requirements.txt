@@ -9,10 +9,10 @@ gradio>=4.0.0
 typing-extensions>=4.5.0; python_version<"3.11"
 
 # Future model backends (install when ready, not required for heuristic MVP)
-# transformers>=4.40.0
-# accelerate>=0.30.0
-# torch>=2.2.0
-# pillow>=10.0.0  # For vision screenshots later
+# transformers>=4.40.0   # Required for SCAM_COURT_BACKEND=smollm3
+# accelerate>=0.30.0     # Optional: speeds up model loading
+# torch>=2.2.0           # Required for SCAM_COURT_BACKEND=smollm3
+# pillow>=10.0.0         # For vision screenshots later
 
 # Dev / test (optional)
 # pytest>=8.0.0

@@ -16,7 +16,7 @@ import urllib.parse
 
 import gradio as gr
 
-from courtroom import CourtroomEngine
+from courtroom import get_backend
 
 # ---------------------------------------------------------------------------
 # Load local SVG assets
@@ -344,9 +344,9 @@ footer {{ display: none !important; }}
 """
 
 # ---------------------------------------------------------------------------
-# Engine instance
+# Backend instance (heuristic by default; smollm3 when SCAM_COURT_BACKEND=smollm3)
 # ---------------------------------------------------------------------------
-engine = CourtroomEngine()
+backend = get_backend()
 
 # ---------------------------------------------------------------------------
 # Example messages
@@ -518,7 +518,7 @@ def analyze_message(message: str) -> tuple[str, dict, str]:
         empty_gauge = _render_gauge(0, "WAITING", "Submit evidence to begin the trial.")
         return empty_gauge, {}, ""
 
-    report = engine.analyze(message)
+    report = backend.analyze(message)
     gauge = _render_gauge(report.risk_score, report.judge_verdict, report.judge_rationale)
     report_dict = report.to_dict()
     json_export = report.to_json()

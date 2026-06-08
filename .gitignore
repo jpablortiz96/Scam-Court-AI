@@ -55,7 +55,9 @@ checkpoints/
 *.safetensors
 
 # Secrets
+.env
 .env.*
+!.env.example
 secrets.json
 
 # Internal planning docs

@@ -72,6 +72,37 @@ scam-court-ai/
 - **Privacy-first:** No API keys, no data leaves your machine.
 - **Dramatic UX:** Custom CSS makes it feel like a courtroom, not a chatbot.
 
+### Backend Modes
+
+Scam Court AI supports two analysis backends, selectable via the `SCAM_COURT_BACKEND` environment variable.
+
+| Mode | Env Value | Speed | Model | Requirements |
+|------|-----------|-------|-------|--------------|
+| **Heuristic** (default) | `heuristic` | < 50 ms | None | None |
+| **SmolLM3** | `smollm3` | 10–30 s | HuggingFaceTB/SmolLM3-3B | `transformers`, `torch` |
+
+**Default behavior:** `SCAM_COURT_BACKEND` is unset or invalid → heuristic runs instantly.
+
+**Switching to SmolLM3:**
+```powershell
+# Windows
+$env:SCAM_COURT_BACKEND = "smollm3"
+python app.py
+```
+
+```bash
+# Linux / macOS
+export SCAM_COURT_BACKEND=smollm3
+python app.py
+```
+
+**Fallback:** If SmolLM3 fails to load or generates invalid output, the app automatically falls back to heuristic and marks `model_backend: "heuristic_fallback_after_smollm3_error"` in the report trace.
+
+**Install model dependencies (only when using SmolLM3):**
+```bash
+pip install transformers torch
+```
+
 ---
 
 ## 🧑‍⚖️ Example Verdict

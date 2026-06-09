@@ -5,15 +5,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![HF Spaces](https://img.shields.io/badge/🤗-Spaces-blue)](https://huggingface.co/spaces)
 
-> **Put suspicious messages on trial before they hurt someone.**
+> **3-Second Scam Shield + AI Courtroom Explanation for the people you protect.**
 
-Scam Court AI is a tiny, multi-agent courtroom that analyzes suspicious WhatsApp messages, SMS, emails, and marketplace chats. Instead of a boring green/red banner, you get a dramatic interactive trial:
+Scam Court AI is a tiny, multi-agent courtroom that analyzes suspicious WhatsApp messages, SMS, emails, and marketplace chats. It is designed first for **older adults and non-technical family members** who need a clear, calm answer in seconds — then explains the reasoning for anyone who wants to dig deeper.
 
-- 🔍 **Detective** — extracts red flags
-- ⚖️ **Prosecutor** — explains manipulation tactics
-- 🛡️ **Defender** — checks if it could be legitimate
-- 👨‍⚖️ **Judge** — delivers a risk score (0–100) and verdict
-- 📋 **Safety Clerk** — writes a safe reply and next steps
+### Four modes, one safe workflow
+
+- 🛡️ **Shield** — High-contrast 3-second verdict: **STOP / VERIFY FIRST / LOW VISIBLE RISK**
+- ⚖️ **Court** — Dramatic interactive trial with Detective, Prosecutor, Defender, Judge, and Safety Clerk
+- 📞 **Suspicious Call** — Five-question quick check for live phone scams
+- 💬 **Companion Preview** — Simulated WhatsApp, SMS, and Marketplace reply cards you can share
 
 Built for the **Hugging Face Build Small Hackathon** with ≤32B parameters, zero cloud APIs, and CPU-first architecture.
 
@@ -33,7 +34,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Then open http://localhost:7860
+Then open http://localhost:7861
 
 ---
 
@@ -47,10 +48,17 @@ Then open http://localhost:7860
 
 ```
 scam-court-ai/
-├── app.py                     # Gradio UI (custom CSS, premium courtroom feel)
+├── app.py                     # Gradio UI (Shield / Court / Call / Companion tabs)
 ├── courtroom/
 │   ├── __init__.py
-│   ├── engine.py              # Heuristic analysis engine (swappable for models)
+│   ├── engine.py              # Heuristic analysis engine + Shield Mode logic
+│   ├── backends/              # Pluggable model backends
+│   │   ├── base.py
+│   │   ├── heuristic.py
+│   │   └── smollm3.py
+│   ├── config.py              # Backend selection from environment
+│   ├── json_parser.py         # Model JSON validation + gap filling
+│   ├── prompts.py             # Structured prompts for SmolLM3
 │   ├── personas.py            # Persona prompts and metadata
 │   └── utils.py               # Sanitization & formatting helpers
 ├── data/
@@ -58,6 +66,8 @@ scam-court-ai/
 │   ├── evaluation_cases.json
 │   └── agent_trace_example.json
 ├── docs/
+│   ├── INTEGRATION_CONTRACT.md # Stable v2 JSON schema
+│   ├── CHROME_COMPANION_PLAN.md
 │   ├── PRIZE_STRATEGY.md
 │   ├── FIELD_NOTES.md
 │   ├── DEMO_SCRIPT.md
@@ -70,7 +80,8 @@ scam-court-ai/
 ### Design Philosophy
 - **Modular engine:** Swap heuristic → SmolLM3-3B → MiniCPM-V without touching `app.py`.
 - **Privacy-first:** No API keys, no data leaves your machine.
-- **Dramatic UX:** Custom CSS makes it feel like a courtroom, not a chatbot.
+- **Elder-safe UX:** Shield Mode uses large type, high contrast, and one-sentence actions.
+- **Dramatic Court UX:** Custom CSS makes the Court tab feel like a courtroom, not a chatbot.
 
 ### Backend Modes
 
@@ -105,10 +116,21 @@ pip install transformers torch
 
 ---
 
-## 🧑‍⚖️ Example Verdict
+## 🛡️ Shield Mode Example
 
 **Input:**
 > "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. Please don't tell Dad, it's embarrassing. Send it to this number quickly!"
+
+**Shield Verdict:**
+> **VERIFY FIRST** — Risk Score: 47/100  
+> Call your family member directly on a number you already know. Do not reply to this message.
+
+**Tell a trusted contact:**
+> "I'm checking this message because someone is pretending to be family. Can you help me reach [name] on the number I already have to confirm they're okay?"
+
+---
+
+## 🧑‍⚖️ Court Mode Example
 
 **Judge Verdict:**
 > **SCAM** — Risk Score: 88/100  
@@ -126,7 +148,7 @@ pip install transformers torch
 
 | Track | Strategy |
 |-------|----------|
-| Backyard AI | Mom-friendly UI, safe replies, zero setup |
+| Backyard AI | Mom-friendly Shield UI, safe replies, zero setup |
 | OpenBMB | MiniCPM-V-4_5 vision integration (roadmap) |
 | Tiny Titan | SmolLM3-3B reasoning core (roadmap) |
 | Off-Brand | Courtroom metaphor — not a chatbot |
@@ -180,6 +202,8 @@ python -c "from courtroom import CourtroomEngine; print(CourtroomEngine().analyz
 
 ## 📚 Documentation
 
+- [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md) — Stable JSON schema v2.1 for integrations
+- [`docs/CHROME_COMPANION_PLAN.md`](docs/CHROME_COMPANION_PLAN.md) — Privacy-first browser extension spec
 - [`docs/PRIZE_STRATEGY.md`](docs/PRIZE_STRATEGY.md) — How we target every award
 - [`docs/FIELD_NOTES.md`](docs/FIELD_NOTES.md) — Architecture decisions & roadmap
 - [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — 60-second video storyboard
@@ -197,4 +221,4 @@ MIT — see [LICENSE](LICENSE)
 
 Built with urgency, paranoia, and justice for the Hugging Face Build Small Hackathon.
 
-> *"Scam Court AI puts suspicious messages on trial."*
+> *"Scam Court AI puts suspicious messages on trial — and gives families a shield."*

@@ -1,18 +1,18 @@
-# 📜 Scam Court AI — Integration Contract v2.0.0
+# 📜 Scam Court AI — Integration Contract v2.1.0
 
-> Stable JSON contract for external consumers: Gradio UI, Chrome extensions, WhatsApp Web, Gmail, customer-support workflows, and agent-trace sharing.
+> Stable JSON contract for external consumers: Gradio UI, Chrome extensions, WhatsApp Web, Gmail, customer-support workflows, family safety dashboards, and agent-trace sharing.
 
 ---
 
 ## Schema Overview
 
-Every analysis produces a single `CourtroomReport` object serialized as JSON. The schema is versioned (`schema_version: "2.0.0"`) and self-describing.
+Every analysis produces a single `CourtroomReport` object serialized as JSON. The schema is versioned (`schema_version: "2.1.0"`) and self-describing. All v2.0.0 fields remain unchanged; v2.1.0 adds Shield Mode fields for elder-safety UX.
 
 ```json
 {
   "report_id": "scr-aB3dEf4g",
   "created_at": "2026-06-05T14:30:00+00:00",
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "input_text": "URGENT: verify your account...",
   "risk_score": 72,
   "risk_level": "high",
@@ -30,7 +30,12 @@ Every analysis produces a single `CourtroomReport` object serialized as JSON. Th
   "user_profile": null,
   "agent_trace": {...},
   "model_backend": "heuristic_v1",
-  "limitations": [...]
+  "limitations": [...],
+  "shield_verdict": "VERIFY FIRST",
+  "immediate_action": "Do not click the link...",
+  "trusted_contact_script": "I received a suspicious message. Can you help me verify it?",
+  "scenario_tags": ["suspicious_link", "urgency"],
+  "companion_source": null
 }
 ```
 
@@ -38,11 +43,13 @@ Every analysis produces a single `CourtroomReport` object serialized as JSON. Th
 
 ## Field Reference
 
+### Core Fields (v2.0.0+)
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `report_id` | string | Unique identifier (`scr-{urlsafe}`). |
 | `created_at` | string | ISO 8601 timestamp in UTC. |
-| `schema_version` | string | Contract version (`2.0.0`). |
+| `schema_version` | string | Contract version (`2.1.0`). |
 | `input_text` | string | Sanitized user input (≤4000 chars, HTML-escaped). |
 | `risk_score` | integer | 0–100 risk score. |
 | `risk_level` | string | `critical` \| `high` \| `medium` \| `low`. |
@@ -61,6 +68,24 @@ Every analysis produces a single `CourtroomReport` object serialized as JSON. Th
 | `agent_trace` | object | Full execution trace with per-agent latency. |
 | `model_backend` | string | Backend identifier (`heuristic_v1`, `smollm3-3b_v1`, etc.). |
 | `limitations` | array | Known caveats for this backend. |
+
+### Shield Mode Fields (v2.1.0)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `shield_verdict` | string | `STOP` \| `VERIFY FIRST` \| `LOW VISIBLE RISK`. Large-type headline for vulnerable users. |
+| `immediate_action` | string | One-sentence directive. Never suggests clicking links or sharing secrets. |
+| `trusted_contact_script` | string | A sentence the user can read to a family member, friend, or caregiver. |
+| `scenario_tags` | array | IDs of patterns that triggered the shield verdict (e.g. `otp_theft`, `impersonation_family`). |
+| `companion_source` | string \| null | Source channel that initiated the analysis: `chrome_extension`, `whatsapp_web`, `gmail`, `marketplace`, etc. |
+
+**Shield verdict mapping:**
+
+| `risk_score` | `shield_verdict` | Use case |
+|--------------|------------------|----------|
+| 70–100 | `STOP` | Confirmed scam pattern; user should hang up / block / do nothing further. |
+| 35–69 | `VERIFY FIRST` | Suspicious; independent verification required before any action. |
+| 0–34 | `LOW VISIBLE RISK` | No strong indicators; maintain normal caution. |
 
 ---
 
@@ -103,9 +128,10 @@ engine = CourtroomEngine()
 report = engine.analyze("Your car warranty is expiring...")
 
 # Render in UI
-print(report.verdict)           # "SCAM"
+print(report.shield_verdict)    # "STOP"
 print(report.risk_score)        # 88
-print(report.safety_reply)      # actionable guidance
+print(report.immediate_action)  # one-sentence directive
+print(report.trusted_contact_script)
 
 # Export for sharing
 json_payload = report.to_json()
@@ -117,16 +143,18 @@ json_payload = report.to_json()
 // content.js — user highlights text and right-clicks
 const selected = window.getSelection().toString();
 
-fetch('http://localhost:7860/api/analyze', {
+fetch('http://localhost:7861/api/analyze', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({text: selected, source: 'chrome_extension'})
 })
 .then(r => r.json())
 .then(report => {
-  // Mini overlay
-  showBadge(report.risk_score, report.verdict);
-  showSafeReply(report.safety_reply);
+  // Elder-safety mini overlay — large type, high contrast
+  showShield(report.shield_verdict, report.immediate_action);
+  showTrustedContactScript(report.trusted_contact_script);
+  // Optional: expand for full courtroom explanation
+  showCourtLink(report.report_id);
 });
 ```
 
@@ -142,15 +170,35 @@ engine = CourtroomEngine()
 
 for msg in family_member_forwarded_messages:
     report = engine.analyze(msg)
-    if report.risk_level in ("critical", "high"):
+    if report.shield_verdict == "STOP" or report.risk_level in ("critical", "high"):
         alert_caregiver(
             report_id=report.report_id,
-            verdict=report.verdict,
+            shield_verdict=report.shield_verdict,
+            immediate_action=report.immediate_action,
+            trusted_contact_script=report.trusted_contact_script,
             safe_reply=report.safety_reply,
             next_steps=report.next_steps,
         )
     # Store for audit
     save_to_family_safety_log(report.to_dict())
+```
+
+### 4. Suspicious Call Quick Check
+
+```python
+from courtroom.engine import CourtroomEngine
+
+result = CourtroomEngine.evaluate_call_checklist(
+    asks_money=True,
+    asks_code=False,
+    claims_family_new_number=True,
+    creates_urgency_or_fear=True,
+    asks_secrecy=False,
+)
+
+print(result["verdict"])   # "VERIFY FIRST — Pause the call"
+print(result["score"])     # 60
+print(result["action"])    # one-sentence directive
 ```
 
 ---
@@ -159,5 +207,6 @@ for msg in family_member_forwarded_messages:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.1.0 | 2026-06-08 | Added Shield Mode fields: `shield_verdict`, `immediate_action`, `trusted_contact_script`, `scenario_tags`, `companion_source`. Added `evaluate_call_checklist()` helper. |
 | 2.0.0 | 2026-06-05 | Flat integration contract. Added `report_id`, `created_at`, `confidence`, `detected_patterns`, `recommended_action`, `user_profile`, `limitations`. |
 | 1.0.0 | 2026-06-05 | Initial nested schema (`input`, `analysis`, `court`, `trace`). |

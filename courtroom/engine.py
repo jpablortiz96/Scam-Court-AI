@@ -56,6 +56,13 @@ class CourtroomReport:
     model_backend: str
     limitations: list[str]
 
+    # Shield Mode — elder-safety UX fields (optional, backward-compatible)
+    shield_verdict: str = ""
+    immediate_action: str = ""
+    trusted_contact_script: str = ""
+    scenario_tags: list[str] = dataclasses.field(default_factory=list)
+    companion_source: str | None = None
+
     # ------------------------------------------------------------------
     # Backward-compatible read-only properties
     # ------------------------------------------------------------------
@@ -250,13 +257,14 @@ class CourtroomEngine:
 
         confidence = self._confidence(score)
         recommended_action = self._recommended_action(score)
+        shield = self._build_shield(score, flags, text)
         report_id = f"scr-{secrets.token_urlsafe(6)}"
         created_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
         return CourtroomReport(
             report_id=report_id,
             created_at=created_at,
-            schema_version="2.0.0",
+            schema_version="2.1.0",
             input_text=text,
             risk_score=score,
             risk_level=risk_level,
@@ -294,6 +302,11 @@ class CourtroomEngine:
             },
             model_backend="heuristic_v1",
             limitations=list(self.LIMITATIONS),
+            shield_verdict=shield["shield_verdict"],
+            immediate_action=shield["immediate_action"],
+            trusted_contact_script=shield["trusted_contact_script"],
+            scenario_tags=shield["scenario_tags"],
+            companion_source=None,
         )
 
     # ------------------------------------------------------------------
@@ -346,6 +359,125 @@ class CourtroomEngine:
         if score >= 20:
             return "pause_and_verify"
         return "standard_caution"
+
+    @staticmethod
+    def _shield_verdict(score: int) -> str:
+        if score >= 70:
+            return "STOP"
+        if score >= 35:
+            return "VERIFY FIRST"
+        return "LOW VISIBLE RISK"
+
+    def _build_shield(self, score: int, flags: list[dict[str, Any]], text: str) -> dict[str, Any]:
+        """Generate Shield Mode fields for fast elder-safety UX."""
+        verdict = self._shield_verdict(score)
+        pattern_ids = {f["key"] for f in flags}
+
+        # Immediate action based on highest-risk pattern
+        if "otp_theft" in pattern_ids:
+            immediate = "Hang up or close the message. Do not share any code, password, or PIN with anyone."
+        elif "payment_request" in pattern_ids or "marketplace_deposit" in pattern_ids:
+            immediate = "Do not send money, gift cards, or cryptocurrency. Stop the conversation now."
+        elif "impersonation_family" in pattern_ids:
+            immediate = "Call your family member directly on a number you already know. Do not reply to this message."
+        elif "suspicious_link" in pattern_ids:
+            immediate = "Do not click the link. Go to the official website or app instead."
+        elif "impersonation_bank" in pattern_ids:
+            immediate = "Call your bank using the number on your card or their official website. Ignore this message."
+        elif "personal_info" in pattern_ids:
+            immediate = "Do not share your Social Security number, card details, or login information."
+        elif "too_good_to_be_true" in pattern_ids:
+            immediate = "If it sounds too good to be true, it probably is. Do not reply or click."
+        elif score >= 70:
+            immediate = "Stop. Do not reply, click, or send anything. Block the sender and warn someone you trust."
+        elif score >= 35:
+            immediate = "Pause. Verify this through a trusted, independent channel before acting."
+        else:
+            immediate = "No immediate action needed. Continue normal caution."
+
+        # Trusted contact script
+        if "impersonation_family" in pattern_ids:
+            script = (
+                "I'm checking this message because someone is pretending to be family. "
+                "Can you help me reach [name] on the number I already have to confirm they're okay?"
+            )
+        elif "impersonation_bank" in pattern_ids:
+            script = (
+                "I received a message saying my bank account has a problem. "
+                "I will call the bank directly using the number on my card. Please remind me not to click any links."
+            )
+        elif "marketplace_deposit" in pattern_ids:
+            script = (
+                "Someone wants me to pay a deposit for an online sale. "
+                "I will only pay in person or through the official platform. I will not use Cash App, Zelle, or wire transfer."
+            )
+        elif score >= 70:
+            script = (
+                "I just received a suspicious message that looks like a scam. "
+                "I've stopped replying. Can you sit with me while I report it?"
+            )
+        elif score >= 35:
+            script = (
+                "I received a message that might not be legitimate. "
+                "I'm going to verify it independently before I do anything."
+            )
+        else:
+            script = (
+                "I received a message that looks okay, but I wanted a second opinion. "
+                "No action needed right now."
+            )
+
+        return {
+            "shield_verdict": verdict,
+            "immediate_action": immediate,
+            "trusted_contact_script": script,
+            "scenario_tags": sorted(pattern_ids),
+        }
+
+    @staticmethod
+    def evaluate_call_checklist(
+        asks_money: bool,
+        asks_code: bool,
+        claims_family_new_number: bool,
+        creates_urgency_or_fear: bool,
+        asks_secrecy: bool,
+    ) -> dict[str, Any]:
+        """Fast risk estimate from a suspicious phone-call checklist."""
+        score = 0
+        tags = []
+        if asks_money:
+            score += 25
+            tags.append("asks_money")
+        if asks_code:
+            score += 30
+            tags.append("asks_code")
+        if claims_family_new_number:
+            score += 20
+            tags.append("claims_family_new_number")
+        if creates_urgency_or_fear:
+            score += 15
+            tags.append("creates_urgency_or_fear")
+        if asks_secrecy:
+            score += 15
+            tags.append("asks_secrecy")
+
+        score = min(100, score)
+        if score >= 70:
+            verdict = "STOP — Hang up now"
+            action = "Hang up immediately. Call back using a number you already know or an official number."
+        elif score >= 35:
+            verdict = "VERIFY FIRST — Pause the call"
+            action = "Tell them you need to call back. Do not give any information. Verify through an official channel."
+        else:
+            verdict = "LOW VISIBLE RISK — Stay cautious"
+            action = "Continue the call carefully. Do not share passwords, codes, or payment info."
+
+        return {
+            "score": score,
+            "verdict": verdict,
+            "action": action,
+            "tags": tags,
+        }
 
     def _build_prosecutor(self, flags: list[dict[str, Any]], text: str) -> str:
         if not flags:

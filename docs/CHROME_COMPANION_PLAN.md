@@ -11,6 +11,7 @@
 3. **No background surveillance.** No DOM mutation observers, no persistent content scripts, no keystroke logging.
 4. **Minimal permissions.** Only `activeTab`, `contextMenus`, and optional `host` permissions for a self-hosted endpoint.
 5. **Privacy-first.** Local analysis by default. Remote endpoint is opt-in and user-configurable.
+6. **Elder-safety first.** The first view is the Shield Mode verdict, not the full courtroom. Everything is large type and high contrast.
 
 ---
 
@@ -20,17 +21,17 @@
 1. User highlights suspicious text on any web page
    (WhatsApp Web, Gmail, Facebook Marketplace, etc.)
 
-2. User right-clicks → "Put on Trial with Scam Court AI"
+2. User right-clicks → "Check with Scam Court AI"
 
 3. Extension sends selected text to local Scam Court AI backend
-   (default: http://localhost:7860)
+   (default: http://localhost:7861)
+   Body: { text: selected, source: "chrome_extension" }
 
-4. A floating panel appears near the selection showing:
-   - Risk score circle
-   - Verdict badge
-   - Collapsible role cards
-   - Safe reply with Copy button
-   - Report ID for sharing
+4. A floating panel appears near the selection showing, in order:
+   a. Shield verdict in large type (STOP / VERIFY FIRST / LOW VISIBLE RISK)
+   b. Immediate action sentence
+   c. "Read this to someone you trust" script with a Copy button
+   d. Optional: "See Court Explanation" link to expand the full trial
 
 5. User clicks Close or clicks outside the panel
 ```
@@ -42,7 +43,7 @@
 | Permission | Why | When |
 |------------|-----|------|
 | `activeTab` | Read the current tab's selected text | Only during user right-click |
-| `contextMenus` | Add "Put on Trial" to right-click menu | At install time |
+| `contextMenus` | Add "Check with Scam Court AI" to right-click menu | At install time |
 | `storage` | Remember user's endpoint preference | At install time |
 | `host` (optional) | Connect to a self-hosted HF Space | Only if user opts in |
 
@@ -57,8 +58,8 @@ extension/
 ├── manifest.json          # V3 manifest; minimal permission set
 ├── background.js          # Context-menu handler + API caller
 ├── content.js             # Injects floating panel; captures selection
-├── panel.html             # Mini courtroom UI (dark gold theme)
-├── panel.css              # Subset of app.py CSS, ~15 KB
+├── panel.html             # Mini Shield + Court UI (dark gold theme)
+├── panel.css              # Subset of app.py CSS, ~18 KB
 ├── panel.js               # Renders report JSON into panel
 └── icons/
     ├── 16.png
@@ -72,13 +73,13 @@ extension/
 ```javascript
 chrome.contextMenus.create({
   id: "analyze-selection",
-  title: "Put on Trial with Scam Court AI",
+  title: "Check with Scam Court AI",
   contexts: ["selection"]
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "analyze-selection") return;
-  const endpoint = await getUserEndpoint(); // default: localhost:7860
+  const endpoint = await getUserEndpoint(); // default: localhost:7861
   const report = await fetch(`${endpoint}/api/analyze`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -98,9 +99,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 ```
 
-### Panel Rendering
+### Panel Rendering — Shield First
 
-The panel consumes the **Integration Contract v2** JSON directly:
+The panel consumes the **Integration Contract v2.1** JSON directly. The default view uses Shield Mode fields:
+
+- `report.shield_verdict` → large headline with color block
+- `report.immediate_action` → one-sentence directive
+- `report.trusted_contact_script` → copyable sentence for a caregiver
+- `report.scenario_tags` → subtle tags for context
+
+An expandable section exposes the Court Mode view:
+
 - `report.risk_score` → circular gauge
 - `report.verdict` → badge
 - `report.detective_report.evidence` → Detective tab
@@ -115,7 +124,7 @@ The panel consumes the **Integration Contract v2** JSON directly:
 |--------|------------|
 | Text leaked to cloud | Default endpoint is `localhost`. Remote is opt-in. |
 | Extension logs history | No history API access. No persistent storage of messages. |
-| Selection sent without consent | Only sent on explicit right-click + "Put on Trial". |
+| Selection sent without consent | Only sent on explicit right-click + "Check with Scam Court AI". |
 | Panel persists and reveals content | Panel auto-closes on click-outside after 60 seconds. |
 | Fingerprinting via endpoint calls | No unique identifiers in requests beyond `report_id` generated server-side. |
 

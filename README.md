@@ -28,11 +28,24 @@ Or run locally in 30 seconds:
 
 ```powershell
 # Windows / PowerShell
+cd d:\scam-court-ai
+
+# 1. Set your config (copy template, edit, never commit .env)
+Copy-Item .env.example .env
+# Edit .env with your preferred settings, then restart your terminal
+
+# 2. Create virtual environment
 python -m venv .venv
 .venv\Scripts\Activate.ps1
+
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Run
 python app.py
 ```
+
+> **Low C: drive space?** Move all caches (pip, Hugging Face, PyTorch) to **D:** — see [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md).
 
 Then open http://localhost:7861
 
@@ -52,10 +65,14 @@ scam-court-ai/
 ├── courtroom/
 │   ├── __init__.py
 │   ├── engine.py              # Heuristic analysis engine + Shield Mode logic
-│   ├── backends/              # Pluggable model backends
+│   ├── backends/              # Pluggable text model backends
 │   │   ├── base.py
 │   │   ├── heuristic.py
 │   │   └── smollm3.py
+│   ├── vision_backends/       # Pluggable vision model backends (Phase 6A)
+│   │   ├── base.py
+│   │   ├── none.py
+│   │   └── minicpm_v.py
 │   ├── config.py              # Backend selection from environment
 │   ├── json_parser.py         # Model JSON validation + gap filling
 │   ├── prompts.py             # Structured prompts for SmolLM3
@@ -82,6 +99,7 @@ scam-court-ai/
 - **Privacy-first:** No API keys, no data leaves your machine.
 - **Elder-safe UX:** Shield Mode uses large type, high contrast, and one-sentence actions.
 - **Dramatic Court UX:** Custom CSS makes the Court tab feel like a courtroom, not a chatbot.
+- **Vision-ready:** Screenshot upload is wired; MiniCPM-V integration is Phase 6B.
 
 ### Backend Modes
 
@@ -112,6 +130,54 @@ python app.py
 **Install model dependencies (only when using SmolLM3):**
 ```bash
 pip install transformers torch
+```
+
+### Vision Backend (Screenshot Evidence)
+
+Scam Court AI accepts screenshot uploads in Shield and Court modes. When `SCAM_COURT_VISION_BACKEND=minicpm_v` is set, OpenBMB **MiniCPM-V-4** actually reads the screenshot, extracts visible text, classifies the screenshot type (WhatsApp, SMS, email, marketplace, invoice, bank alert), and lists visual scam clues. The extracted text is then fed into the existing Scam Court engine for a full verdict.
+
+| Mode | Env Value | Description |
+|------|-----------|-------------|
+| **None** (default) | `none` | Accepts screenshots but does not run vision model. Shows safe fallback: *"Screenshot received. Vision model is not active yet. Paste the message text for full analysis."* |
+| **MiniCPM-V** | `minicpm_v` | Loads `openbmb/MiniCPM-V-4` lazily and performs real OCR + vision-language analysis. |
+
+**Default behavior:** `SCAM_COURT_VISION_BACKEND` is unset or invalid → screenshot is accepted but the app forces **VERIFY FIRST** and asks you to paste text.
+
+**Vision dependencies**
+
+MiniCPM-V-4 requires the vision stack. All dependencies are listed in `requirements.txt` and loaded **lazily** — the app still starts instantly when `SCAM_COURT_VISION_BACKEND=none`.
+
+```powershell
+# Install all dependencies (includes torch, transformers, pillow, etc.)
+pip install -r requirements.txt
+```
+
+**Activate MiniCPM-V:**
+```powershell
+# Option A: Set per session
+$env:SCAM_COURT_VISION_BACKEND = "minicpm_v"
+$env:SCAM_COURT_VISION_MODEL = "openbmb/MiniCPM-V-4"
+python app.py
+
+# Option B: Persist across terminals (recommended)
+# Edit .env and set SCAM_COURT_VISION_BACKEND=minicpm_v
+# Restart your terminal or VS Code
+python app.py
+```
+
+**Default behavior:** `SCAM_COURT_VISION_BACKEND=none` → screenshot is accepted but the app forces **VERIFY FIRST** and asks you to paste text. No model is downloaded and startup stays fast.
+
+**Safety behavior:** If the vision model fails to load or cannot read the image, the app never returns **LOW VISIBLE RISK**. It forces **VERIFY FIRST** with a clear warning.
+
+**Privacy note:** Uploaded screenshots are processed only for the current session. No images are stored or transmitted.
+
+**Local hardware too slow?** MiniCPM-V-4 runs best on a GPU (8 GB+ VRAM). For local CPU-only machines, first-run analysis may take 1–2 minutes. For fastest results, deploy to a Hugging Face Space with GPU or ZeroGPU.
+
+**Low C: drive space?** See [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md) to move pip, Hugging Face, and PyTorch caches to **D:**.
+
+**Compatibility note:** MiniCPM-V-4 runs with **Transformers 4.x**. If you see an error like `'MiniCPMV' object has no attribute 'all_tied_weights_keys'`, your Transformers version is incompatible (often 5.x or an RC). Fix it with:
+```powershell
+pip install "transformers>=4.45,<5"
 ```
 
 ---

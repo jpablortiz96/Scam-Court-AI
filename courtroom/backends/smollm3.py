@@ -29,6 +29,8 @@ class SmolLM3Backend(BaseBackend):
     Keeps heuristic as fallback for speed and reliability.
     """
 
+    model_backend = "smollm3"
+
     def __init__(self) -> None:
         self._engine = CourtroomEngine()
         self._model: "AutoModelForCausalLM | None" = None

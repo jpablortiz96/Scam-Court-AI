@@ -9,14 +9,17 @@ Deploy to Hugging Face Spaces:
 
 from __future__ import annotations
 
+import dataclasses
 import html
 import pathlib
 import random
+import re
 import urllib.parse
 
 import gradio as gr
 
-from courtroom import get_backend
+from courtroom import get_backend, get_vision_backend
+from courtroom.config import get_vision_model_id
 from courtroom.engine import CourtroomEngine
 
 # ---------------------------------------------------------------------------
@@ -383,6 +386,23 @@ body {{
   font-size: 1rem !important;
   color: rgba(253, 251, 247, 0.92) !important;
 }}
+.call-check .wrap {{
+  padding: 0.7rem 0.6rem !important;
+  border-radius: 10px !important;
+  transition: background 0.2s ease !important;
+}}
+.call-check .wrap:has(input:checked) {{
+  background: rgba(197, 160, 89, 0.12) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+}}
+.call-check input[type="checkbox"] {{
+  width: 22px !important;
+  height: 22px !important;
+  accent-color: var(--gold) !important;
+}}
+.call-check input[type="checkbox"]:checked {{
+  background: var(--gold) !important;
+}}
 
 /* Companion previews */
 .companion-phone {{
@@ -470,6 +490,87 @@ body {{
 .companion-shield.safe {{
   background: rgba(39, 174, 96, 0.25);
   color: #abebc6;
+}}
+
+/* Vision Witness card */
+.vision-card {{
+  background: rgba(253, 251, 247, 0.02);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  border-radius: 14px;
+  padding: 1.2rem;
+  margin-top: 1rem;
+}}
+.vision-header {{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold-light);
+  margin-bottom: 0.6rem;
+}}
+.vision-status {{
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}}
+.vision-status.inactive {{
+  background: rgba(150, 150, 150, 0.2);
+  color: #ccc;
+}}
+.vision-status.loaded {{
+  background: rgba(197, 160, 89, 0.2);
+  color: var(--gold-light);
+}}
+.vision-status.analyzed {{
+  background: rgba(39, 174, 96, 0.2);
+  color: #abebc6;
+}}
+.vision-status.failed {{
+  background: rgba(192, 57, 43, 0.2);
+  color: #f5b7b1;
+}}
+.vision-status.not_available {{
+  background: rgba(243, 156, 18, 0.2);
+  color: #f9e79f;
+}}
+
+/* Backend status indicator */
+.backend-status {{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(253, 251, 247, 0.04);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  color: var(--gold);
+}}
+.backend-status .dot {{
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green-safe);
+}}
+.backend-status .dot.off {{
+  background: var(--amber-warn);
+}}
+.vision-body {{
+  font-size: 0.95rem;
+  color: rgba(253, 251, 247, 0.85);
+  line-height: 1.5;
+}}
+.vision-privacy {{
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 0.6rem;
 }}
 
 /* Forms */
@@ -765,6 +866,35 @@ def _call_trusted_script(score: int, tags: list[str]) -> str:
     return "I received a phone call that seemed okay, but I wanted to be cautious. No action needed right now."
 
 
+def _clean_visual_risk_clues(raw_clues: list[str], extracted_text: str) -> list[str]:
+    """Remove placeholder tokens and derive fallback clues from text."""
+    placeholder_tokens = {"list", "of", "visual", "red", "flags", "item", "none", "n/a", "unknown"}
+    cleaned: list[str] = []
+    for clue in raw_clues:
+        clue_lower = clue.lower().strip()
+        if clue_lower in placeholder_tokens or len(clue_lower) < 3:
+            continue
+        cleaned.append(clue.strip())
+
+    # Derive fallback clues from extracted text heuristics
+    if extracted_text:
+        lowered = extracted_text.lower()
+        fallback_map = {
+            "suspicious link detected": bool(re.search(r"https?://", lowered)),
+            "package delivery action request": any(k in lowered for k in ("fedex", "dhl", "usps", "ups", "package", "parcel", "delivery")),
+            "money or payment request": any(k in lowered for k in ("payment", "pay", "wire", "gift card", "crypto", "zelle", "venmo")),
+            "credential or code request": any(k in lowered for k in ("otp", "code", "password", "pin", "verify your identity")),
+            "urgency or deadline": any(k in lowered for k in ("urgent", "immediately", "24 hours", "deadline", "act now")),
+            "bank or government impersonation": any(k in lowered for k in ("bank", "irs", "social security", "government", "stimulus")),
+            "marketplace off-platform payment": any(k in lowered for k in ("holding deposit", "security deposit", "off platform", "outside the app")),
+        }
+        for label, triggered in fallback_map.items():
+            if triggered and label not in [c.lower() for c in cleaned]:
+                cleaned.append(label)
+
+    return cleaned
+
+
 def analyze_call_checklist(
     asks_money: bool,
     asks_code: bool,
@@ -931,28 +1061,166 @@ def render_companion_marketplace(report_dict: dict | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Vision Witness renderer
+# ---------------------------------------------------------------------------
+def render_vision_witness(report_dict: dict | None) -> str:
+    if not report_dict:
+        return ""
+    if not report_dict.get("image_evidence_present"):
+        return ""
+    status = report_dict.get("vision_status", "inactive")
+    backend = report_dict.get("vision_backend", "none")
+    model = report_dict.get("vision_model") or backend
+    summary = report_dict.get("vision_summary") or ""
+    extracted = report_dict.get("extracted_text") or ""
+    screenshot_type = report_dict.get("screenshot_type") or ""
+    clues = report_dict.get("screenshot_risk_clues", [])
+    confidence = report_dict.get("vision_confidence", 0.0)
+    error = report_dict.get("vision_error") or ""
+
+    status_label = {
+        "inactive": "Inactive — paste text for analysis",
+        "loaded": "Loaded — vision backend ready",
+        "analyzed": "Analyzed",
+        "failed": "Failed — verify independently",
+        "not_available": "Not Available — install transformers + torch",
+    }.get(status, status)
+
+    body_parts = []
+    if screenshot_type:
+        body_parts.append(f'<p><strong>Type:</strong> {html.escape(screenshot_type.capitalize(), quote=False)}</p>')
+    if summary:
+        body_parts.append(f"<p>{html.escape(summary, quote=False)}</p>")
+    if extracted:
+        body_parts.append(f"<p><strong>Extracted text:</strong> {html.escape(extracted, quote=False)}</p>")
+    if clues:
+        items = "".join(f"<li>{html.escape(c, quote=False)}</li>" for c in clues)
+        body_parts.append(f'<p><strong>Visual clues:</strong></p><ul>{items}</ul>')
+    if error and status in ("failed", "not_available"):
+        body_parts.append(f'<p style="opacity:0.7;font-size:0.85rem;">Error: {html.escape(error, quote=False)}</p>')
+
+    body_html = "".join(body_parts) if body_parts else "<p>Screenshot received. Vision analysis is not active yet. Paste the message text for full analysis.</p>"
+
+    confidence_badge = ""
+    if confidence > 0:
+        confidence_badge = f'<span style="margin-left:0.5rem;font-size:0.7rem;opacity:0.7;">Confidence: {confidence:.0%}</span>'
+
+    return f"""
+    <div class="vision-card">
+      <div class="vision-header">&#128248; Vision Witness</div>
+      <span class="vision-status {status}">{html.escape(status_label, quote=False)}</span>{confidence_badge}
+      <div class="vision-body">{body_html}</div>
+      <div class="vision-privacy">Model: {html.escape(model, quote=False)} · Screenshot processed only for this session.</div>
+    </div>
+    """
+
+
+# ---------------------------------------------------------------------------
 # Analysis function
 # ---------------------------------------------------------------------------
-def analyze_message(message: str) -> tuple[str, dict, str, str, str, str, str]:
-    if not message or not message.strip():
+def analyze_message(message: str, image_path: str | None = None) -> tuple[str, dict, str, str, str, str, str, str]:
+    has_image = image_path is not None and image_path != ""
+    has_text = message and message.strip()
+
+    if not has_text and not has_image:
         empty_gauge = _render_gauge(0, "WAITING", "Submit evidence to begin the trial.")
         empty_shield = render_shield(None)
+        empty_vision = render_vision_witness(None)
         empty_companion = (
             render_companion_whatsapp(None),
             render_companion_sms(None),
             render_companion_marketplace(None),
         )
-        return empty_gauge, {}, "", empty_shield, *empty_companion
+        return empty_gauge, {}, "", empty_shield, empty_vision, *empty_companion
 
-    report = backend.analyze(message)
+    # Vision backend handling
+    vision_backend = get_vision_backend()
+    vision_result: dict[str, Any] | None = None
+    if has_image:
+        vision_result = vision_backend.analyze_image(image_path, context_text=message or None)
+
+    # Determine what text to analyze
+    text_for_analysis = message or ""
+    extracted_text = ""
+    input_sources: list[str] = []
+    if has_text:
+        input_sources.append("pasted_text")
+    if vision_result:
+        extracted_text = vision_result.get("extracted_text") or ""
+        recommended = vision_result.get("recommended_text_for_analysis") or ""
+        if recommended:
+            extracted_text = recommended
+        if extracted_text:
+            input_sources.append("vision_extracted_text")
+
+    # Combine user text + extracted text if both present
+    if has_text and extracted_text:
+        text_for_analysis = f"[User text]: {message.strip()}\n[From screenshot]: {extracted_text}"
+    elif extracted_text:
+        text_for_analysis = extracted_text
+
+    # Run text analysis on the effective input
+    report = backend.analyze(text_for_analysis)
+
+    # Override vision fields and fusion tracking on the report
+    if has_image and vision_result:
+        v_status = vision_result.get("vision_status", "inactive")
+        v_confidence = float(vision_result.get("vision_confidence", 0.0))
+
+        # SAFETY RULE: if vision failed or is inactive, force at least VERIFY FIRST
+        if v_status not in ("analyzed", "loaded"):
+            if report.risk_score < 35:
+                report = dataclasses.replace(
+                    report,
+                    risk_score=35,
+                    risk_level="medium",
+                    verdict="VERIFY FIRST",
+                    shield_verdict="VERIFY FIRST",
+                    immediate_action="Screenshot uploaded but vision analysis is unavailable. Do not act on this message. Verify through a trusted, independent channel.",
+                    trusted_contact_script="I received a suspicious screenshot but the vision tool could not read it. I need help verifying this message before I do anything.",
+                    recommended_action="verify_independently",
+                )
+
+        # Clean visual risk clues: remove placeholder tokens
+        raw_clues = vision_result.get("screenshot_risk_clues", [])
+        cleaned_clues = _clean_visual_risk_clues(raw_clues, extracted_text)
+
+        report = dataclasses.replace(
+            report,
+            evidence_source="text_and_screenshot" if has_text else "screenshot",
+            image_evidence_present=True,
+            vision_backend=vision_backend.backend_name,
+            vision_model=vision_result.get("vision_model"),
+            vision_status=v_status,
+            vision_summary=vision_result.get("vision_summary"),
+            extracted_text=vision_result.get("extracted_text"),
+            screenshot_type=vision_result.get("screenshot_type"),
+            screenshot_risk_clues=cleaned_clues,
+            recommended_text_for_analysis=vision_result.get("recommended_text_for_analysis"),
+            vision_confidence=v_confidence,
+            vision_error=vision_result.get("vision_error"),
+            effective_input_text=text_for_analysis,
+            input_sources=input_sources,
+            analysis_used_vision_text=bool(extracted_text),
+        )
+    else:
+        # Text-only analysis
+        report = dataclasses.replace(
+            report,
+            effective_input_text=text_for_analysis,
+            input_sources=input_sources,
+            analysis_used_vision_text=False,
+        )
+
     gauge = _render_gauge(report.risk_score, report.judge_verdict, report.judge_rationale)
     report_dict = report.to_dict()
     json_export = report.to_json()
     shield = render_shield(report_dict)
+    vision_html = render_vision_witness(report_dict)
     whatsapp = render_companion_whatsapp(report_dict)
     sms = render_companion_sms(report_dict)
     marketplace = render_companion_marketplace(report_dict)
-    return gauge, report_dict, json_export, shield, whatsapp, sms, marketplace
+    return gauge, report_dict, json_export, shield, vision_html, whatsapp, sms, marketplace
 
 
 # ---------------------------------------------------------------------------
@@ -975,6 +1243,24 @@ def _show_detective(report: dict | None) -> tuple[str, str]:
     return _render_indicator("detective"), _render_role("detective", report)
 
 
+def _render_backend_status() -> str:
+    """Render a small backend status indicator for the header."""
+    import os
+    text_backend = getattr(backend, "model_backend", "heuristic_v1")
+    vision = get_vision_backend()
+    vision_name = vision.backend_name
+    vision_dot = "off" if vision_name == "none" else ""
+    hf_home = os.getenv("HF_HOME", "~/.cache/huggingface")
+    return f"""
+    <div style="text-align:center;margin-bottom:1rem;">
+      <span class="backend-status">Text: {text_backend}</span>
+      <span class="backend-status">Vision: {vision_name} <span class="dot {vision_dot}"></span></span>
+      <span class="backend-status">Model: {get_vision_model_id()}</span>
+      <span class="backend-status">Cache: {hf_home}</span>
+    </div>
+    """
+
+
 # ---------------------------------------------------------------------------
 # Gradio UI
 # ---------------------------------------------------------------------------
@@ -988,6 +1274,7 @@ def build_ui() -> gr.Blocks:
             </div>
             """
         )
+        gr.HTML(_render_backend_status())
 
         report_state = gr.State(None)
 
@@ -1005,6 +1292,19 @@ def build_ui() -> gr.Blocks:
                             max_lines=18,
                             show_label=False,
                         )
+                        gr.Markdown(
+                            '<div class="section-label" style="margin-top:1rem;">Or upload a screenshot</div>'
+                        )
+                        shield_image = gr.Image(
+                            label="",
+                            type="filepath",
+                            sources=["upload"],
+                            interactive=True,
+                            show_label=False,
+                        )
+                        gr.Markdown(
+                            '<em style="opacity:0.55;font-size:0.75rem;">PNG, JPG, JPEG · WhatsApp, SMS, email, marketplace, or fake invoice screenshot</em>'
+                        )
                         with gr.Row():
                             shield_submit = gr.Button("Analyze", variant="primary")
                             shield_random = gr.Button("Random Example")
@@ -1017,6 +1317,7 @@ def build_ui() -> gr.Blocks:
 
                     with gr.Column(scale=2):
                         shield_output = gr.HTML()
+                        shield_vision = gr.HTML()
 
             # ── Court Mode ──
             with gr.Tab("Court"):
@@ -1032,6 +1333,19 @@ def build_ui() -> gr.Blocks:
                             max_lines=18,
                             show_label=False,
                         )
+                        gr.Markdown(
+                            '<div class="section-label" style="margin-top:1rem;">Or upload a screenshot</div>'
+                        )
+                        court_image = gr.Image(
+                            label="",
+                            type="filepath",
+                            sources=["upload"],
+                            interactive=True,
+                            show_label=False,
+                        )
+                        gr.Markdown(
+                            '<em style="opacity:0.55;font-size:0.75rem;">PNG, JPG, JPEG · WhatsApp, SMS, email, marketplace, or fake invoice screenshot</em>'
+                        )
                         with gr.Row():
                             court_submit = gr.Button("Bring to Court", variant="primary")
                             court_random = gr.Button("Random Example")
@@ -1046,6 +1360,7 @@ def build_ui() -> gr.Blocks:
                     # Right Column
                     with gr.Column(scale=2):
                         risk_gauge = gr.HTML()
+                        court_vision = gr.HTML()
 
                         gr.Markdown('<div class="section-label">Court Members</div>')
                         with gr.Row(elem_classes=["role-selector"]):
@@ -1102,6 +1417,7 @@ def build_ui() -> gr.Blocks:
                             companion_example_btns.append((btn, text))
 
                     with gr.Column(scale=2):
+                        companion_vision = gr.HTML()
                         with gr.Tabs():
                             with gr.Tab("WhatsApp"):
                                 companion_whatsapp = gr.HTML()
@@ -1114,8 +1430,8 @@ def build_ui() -> gr.Blocks:
         # Analyze from Shield tab
         shield_submit.click(
             fn=analyze_message,
-            inputs=shield_input,
-            outputs=[risk_gauge, report_state, json_out, shield_output, companion_whatsapp, companion_sms, companion_marketplace],
+            inputs=[shield_input, shield_image],
+            outputs=[risk_gauge, report_state, json_out, shield_output, shield_vision, companion_whatsapp, companion_sms, companion_marketplace],
         ).then(
             fn=_show_detective,
             inputs=report_state,
@@ -1125,8 +1441,8 @@ def build_ui() -> gr.Blocks:
         # Analyze from Court tab
         court_submit.click(
             fn=analyze_message,
-            inputs=court_input,
-            outputs=[risk_gauge, report_state, json_out, shield_output, companion_whatsapp, companion_sms, companion_marketplace],
+            inputs=[court_input, court_image],
+            outputs=[risk_gauge, report_state, json_out, shield_output, court_vision, companion_whatsapp, companion_sms, companion_marketplace],
         ).then(
             fn=_show_detective,
             inputs=report_state,
@@ -1136,8 +1452,8 @@ def build_ui() -> gr.Blocks:
         # Analyze from Companion tab
         companion_submit.click(
             fn=analyze_message,
-            inputs=companion_input,
-            outputs=[risk_gauge, report_state, json_out, shield_output, companion_whatsapp, companion_sms, companion_marketplace],
+            inputs=[companion_input, gr.State(None)],
+            outputs=[risk_gauge, report_state, json_out, shield_output, companion_vision, companion_whatsapp, companion_sms, companion_marketplace],
         ).then(
             fn=_show_detective,
             inputs=report_state,
@@ -1176,13 +1492,15 @@ def build_ui() -> gr.Blocks:
         # Clear buttons — reset all shared state
         def _clear_all():
             return (
-                "", "", "",
+                None, None, None,  # images
+                "", "", "",  # texts
                 _render_gauge(0, "WAITING", "Submit evidence to begin the trial."),
                 None,
                 "",
                 _render_indicator(None),
                 "",
                 render_shield(None),
+                "", "", "",  # vision outputs
                 render_companion_whatsapp(None),
                 render_companion_sms(None),
                 render_companion_marketplace(None),
@@ -1191,28 +1509,34 @@ def build_ui() -> gr.Blocks:
         shield_clear.click(
             fn=_clear_all,
             outputs=[
+                shield_image, court_image, gr.State(None),
                 shield_input, court_input, companion_input,
                 risk_gauge, report_state, json_out,
                 active_indicator, role_display,
-                shield_output, companion_whatsapp, companion_sms, companion_marketplace,
+                shield_output, shield_vision, court_vision, companion_vision,
+                companion_whatsapp, companion_sms, companion_marketplace,
             ],
         )
         court_clear.click(
             fn=_clear_all,
             outputs=[
+                shield_image, court_image, gr.State(None),
                 shield_input, court_input, companion_input,
                 risk_gauge, report_state, json_out,
                 active_indicator, role_display,
-                shield_output, companion_whatsapp, companion_sms, companion_marketplace,
+                shield_output, shield_vision, court_vision, companion_vision,
+                companion_whatsapp, companion_sms, companion_marketplace,
             ],
         )
         companion_clear.click(
             fn=_clear_all,
             outputs=[
+                shield_image, court_image, gr.State(None),
                 shield_input, court_input, companion_input,
                 risk_gauge, report_state, json_out,
                 active_indicator, role_display,
-                shield_output, companion_whatsapp, companion_sms, companion_marketplace,
+                shield_output, shield_vision, court_vision, companion_vision,
+                companion_whatsapp, companion_sms, companion_marketplace,
             ],
         )
 
@@ -1231,10 +1555,12 @@ def build_ui() -> gr.Blocks:
 # Entrypoint
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
+    import os
+    port = int(os.getenv("GRADIO_SERVER_PORT", os.getenv("PORT", "7861")))
     demo = build_ui()
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7861,
+        server_port=port,
         show_error=True,
         favicon_path=None,
         css=COURT_CSS,

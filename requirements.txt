@@ -4,15 +4,28 @@
 # UI
 gradio>=4.0.0
 
+# Configuration
+python-dotenv>=1.0.0
+
 # Data handling (std lib covers most, but keep explicit for future)
 # typing-extensions only needed for <3.11
 typing-extensions>=4.5.0; python_version<"3.11"
 
-# Future model backends (install when ready, not required for heuristic MVP)
-# transformers>=4.40.0   # Required for SCAM_COURT_BACKEND=smollm3
-# accelerate>=0.30.0     # Optional: speeds up model loading
-# torch>=2.2.0           # Required for SCAM_COURT_BACKEND=smollm3
-# pillow>=10.0.0         # For vision screenshots later
+# Vision backend — required for SCAM_COURT_VISION_BACKEND=minicpm_v
+# MiniCPM-V-4 uses trust_remote_code and needs the full vision stack.
+# These are loaded lazily; the app starts fast when SCAM_COURT_VISION_BACKEND=none.
+torch>=2.2.0
+torchvision>=0.17.0
+transformers>=4.45.0,<5
+accelerate>=0.30.0
+pillow>=10.0.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+timm>=0.9.0
+einops>=0.7.0
+
+# Text model backend — optional, only when SCAM_COURT_BACKEND=smollm3
+# (transformers, torch, accelerate already listed above)
 
 # Dev / test (optional)
 # pytest>=8.0.0

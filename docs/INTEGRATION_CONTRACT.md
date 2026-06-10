@@ -35,7 +35,14 @@ Every analysis produces a single `CourtroomReport` object serialized as JSON. Th
   "immediate_action": "Do not click the link...",
   "trusted_contact_script": "I received a suspicious message. Can you help me verify it?",
   "scenario_tags": ["suspicious_link", "urgency"],
-  "companion_source": null
+  "companion_source": null,
+  "evidence_source": "text",
+  "image_evidence_present": false,
+  "vision_backend": "none",
+  "vision_status": "inactive",
+  "vision_summary": null,
+  "extracted_text": null,
+  "screenshot_risk_clues": []
 }
 ```
 
@@ -78,6 +85,23 @@ Every analysis produces a single `CourtroomReport` object serialized as JSON. Th
 | `trusted_contact_script` | string | A sentence the user can read to a family member, friend, or caregiver. |
 | `scenario_tags` | array | IDs of patterns that triggered the shield verdict (e.g. `otp_theft`, `impersonation_family`). |
 | `companion_source` | string \| null | Source channel that initiated the analysis: `chrome_extension`, `whatsapp_web`, `gmail`, `marketplace`, etc. |
+
+### Vision Witness Fields (v2.2.0)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `evidence_source` | string | `"text"` \| `"screenshot"` \| `"text_and_screenshot"`. Indicates what evidence was submitted. |
+| `image_evidence_present` | boolean | True if a screenshot was uploaded. |
+| `vision_backend` | string | Vision backend identifier (`none`, `minicpm_v`). |
+| `vision_model` | string \| null | Model ID used (e.g., `openbmb/MiniCPM-V-4`). |
+| `vision_status` | string | `inactive` \| `loaded` \| `analyzed` \| `failed` \| `not_available`. |
+| `vision_summary` | string \| null | Human-readable summary from the vision model. |
+| `extracted_text` | string \| null | OCR text extracted from the screenshot. |
+| `screenshot_type` | string \| null | Classified type: `whatsapp`, `sms`, `email`, `marketplace`, `invoice`, `bank_alert`, `unknown`. |
+| `screenshot_risk_clues` | array | Visual red flags detected in the image (e.g., `fake_url_bar`, `mismatched_logo`). |
+| `recommended_text_for_analysis` | string \| null | Clean summary prepared for the text analysis engine. |
+| `vision_confidence` | float | 0.0–1.0 confidence score from the vision model. |
+| `vision_error` | string \| null | Error message if vision analysis failed. |
 
 **Shield verdict mapping:**
 
@@ -207,6 +231,7 @@ print(result["action"])    # one-sentence directive
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2.0 | 2026-06-09 | Added Vision Witness fields: `evidence_source`, `image_evidence_present`, `vision_backend`, `vision_model`, `vision_status`, `vision_summary`, `extracted_text`, `screenshot_type`, `screenshot_risk_clues`, `recommended_text_for_analysis`, `vision_confidence`, `vision_error`. Real MiniCPM-V backend in Phase 6B. |
 | 2.1.0 | 2026-06-08 | Added Shield Mode fields: `shield_verdict`, `immediate_action`, `trusted_contact_script`, `scenario_tags`, `companion_source`. Added `evaluate_call_checklist()` helper. |
 | 2.0.0 | 2026-06-05 | Flat integration contract. Added `report_id`, `created_at`, `confidence`, `detected_patterns`, `recommended_action`, `user_profile`, `limitations`. |
 | 1.0.0 | 2026-06-05 | Initial nested schema (`input`, `analysis`, `court`, `trace`). |

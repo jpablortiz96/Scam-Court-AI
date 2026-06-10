@@ -63,6 +63,30 @@ class CourtroomReport:
     scenario_tags: list[str] = dataclasses.field(default_factory=list)
     companion_source: str | None = None
 
+    # Vision Witness — screenshot evidence fields (optional, backward-compatible)
+    evidence_source: str = "text"  # "text" | "screenshot" | "text_and_screenshot"
+    image_evidence_present: bool = False
+    vision_backend: str = "none"
+    vision_model: str | None = None
+    vision_status: str = "inactive"  # inactive / loaded / analyzed / failed / not_available
+    vision_summary: str | None = None
+    extracted_text: str | None = None
+    screenshot_type: str | None = None
+    screenshot_risk_clues: list[str] = dataclasses.field(default_factory=list)
+    recommended_text_for_analysis: str | None = None
+    vision_confidence: float = 0.0
+    vision_error: str | None = None
+
+    # Vision-to-text fusion tracking
+    effective_input_text: str = ""
+    input_sources: list[str] = dataclasses.field(default_factory=list)
+    analysis_used_vision_text: bool = False
+
+    # Elder-safety policy audit trail
+    safety_policy_applied: bool = False
+    safety_policy_reason: str = ""
+    safety_policy_tags: list[str] = dataclasses.field(default_factory=list)
+
     # ------------------------------------------------------------------
     # Backward-compatible read-only properties
     # ------------------------------------------------------------------
@@ -117,7 +141,7 @@ class CourtroomEngine:
         "impersonation_bank": {
             "patterns": [
                 r"\b(bank of america|chase|wells fargo|citi|capital one|paypal|venmo|zelle|your bank)\b",
-                r"\b(verify your account|confirm your identity|security alert)\b",
+                r"\b(verify your (account|identity)|confirm your identity|security alert)\b",
             ],
             "weight": 20,
             "label": "Impersonates a financial institution",
@@ -201,6 +225,23 @@ class CourtroomEngine:
             "weight": 18,
             "label": "Fake invoice or payment demand",
         },
+        "package_delivery": {
+            "patterns": [
+                r"\b(fedex|dhl|usps|ups|package|parcel|delivery)\b",
+                r"\b(delivery preferences|tracking code|reschedule delivery|customs fee|failed delivery)\b",
+                r"\b(click to schedule|schedule delivery|confirm delivery|update shipping)\b",
+            ],
+            "weight": 18,
+            "label": "Package delivery message with action link",
+        },
+        "unknown_link_action": {
+            "patterns": [
+                r"https?://[^\s]+",
+                r"\b(click here|tap here|open this|follow this|visit)\b",
+            ],
+            "weight": 12,
+            "label": "Contains a link or action request",
+        },
     }
 
     # Responses for defender when risk is low vs high
@@ -235,6 +276,10 @@ class CourtroomEngine:
             if self._matches_any(text, v["patterns"])
         ]
 
+        # Apply elder-safety policy layer
+        score, policy_reason, policy_tags = self._apply_elder_safety_policy(score, flags, text)
+        risk_level = self._risk_level(score)
+
         prosecutor = self._build_prosecutor(flags, text)
         defender = self._build_defender(score, flags, text)
         judge_verdict, judge_rationale = self._build_judge(score, flags)
@@ -264,7 +309,7 @@ class CourtroomEngine:
         return CourtroomReport(
             report_id=report_id,
             created_at=created_at,
-            schema_version="2.1.0",
+            schema_version="2.2.0",
             input_text=text,
             risk_score=score,
             risk_level=risk_level,
@@ -307,6 +352,12 @@ class CourtroomEngine:
             trusted_contact_script=shield["trusted_contact_script"],
             scenario_tags=shield["scenario_tags"],
             companion_source=None,
+            effective_input_text=text,
+            input_sources=["pasted_text"],
+            analysis_used_vision_text=False,
+            safety_policy_applied=bool(policy_reason),
+            safety_policy_reason=policy_reason,
+            safety_policy_tags=policy_tags,
         )
 
     # ------------------------------------------------------------------
@@ -368,6 +419,67 @@ class CourtroomEngine:
             return "VERIFY FIRST"
         return "LOW VISIBLE RISK"
 
+    def _apply_elder_safety_policy(
+        self, score: int, flags: list[dict[str, Any]], text: str
+    ) -> tuple[int, str, list[str]]:
+        """Post-process score with elder-safety rules. Never return LOW RISK for unsafe signals.
+
+        Returns (adjusted_score, reason, tags).
+        """
+        lowered = text.lower()
+        pattern_ids = {f["key"] for f in flags}
+        reason_parts: list[str] = []
+        tags: list[str] = []
+
+        # High-risk triggers that force STOP if not already
+        high_risk_triggers = {
+            "otp_theft": "requests a code, password, or PIN",
+            "payment_request": "asks for money, gift cards, or crypto",
+            "impersonation_family": "pretends to be family from a new number",
+        }
+        for pid, desc in high_risk_triggers.items():
+            if pid in pattern_ids and score < 70:
+                reason_parts.append(desc)
+                tags.append(pid)
+
+        # Medium-risk: URL + package/bank/government/refund/prize context
+        has_url = "unknown_link_action" in pattern_ids or re.search(r"https?://[^\s]+", lowered) is not None
+        medium_context = {
+            "package_delivery": "a package delivery message",
+            "impersonation_bank": "a bank or financial message",
+            "too_good_to_be_true": "a prize, refund, or too-good-to-be-true offer",
+            "personal_info": "a request for sensitive information",
+            "invoice_scam": "an invoice or payment demand",
+            "marketplace_deposit": "a marketplace deposit or off-platform payment request",
+        }
+        for pid, desc in medium_context.items():
+            if pid in pattern_ids and score < 35:
+                reason_parts.append(desc)
+                tags.append(pid)
+
+        # Generic URL without other context → at least VERIFY FIRST
+        if has_url and not pattern_ids and score < 35:
+            reason_parts.append("message contains a link")
+            tags.append("unknown_link_action")
+
+        if not reason_parts:
+            return score, "", []
+
+        # Build score bump
+        if tags and any(t in high_risk_triggers for t in tags):
+            new_score = max(score, 70)
+        elif tags:
+            new_score = max(score, 45)
+        else:
+            new_score = max(score, 35)
+
+        reason = (
+            "This could be legitimate, but because it includes "
+            + ", ".join(reason_parts)
+            + ", verify through an official channel first."
+        )
+        return new_score, reason, tags
+
     def _build_shield(self, score: int, flags: list[dict[str, Any]], text: str) -> dict[str, Any]:
         """Generate Shield Mode fields for fast elder-safety UX."""
         verdict = self._shield_verdict(score)
@@ -380,6 +492,8 @@ class CourtroomEngine:
             immediate = "Do not send money, gift cards, or cryptocurrency. Stop the conversation now."
         elif "impersonation_family" in pattern_ids:
             immediate = "Call your family member directly on a number you already know. Do not reply to this message."
+        elif "package_delivery" in pattern_ids:
+            immediate = "Do not click the link. Open the official carrier website or app manually and enter the tracking number there."
         elif "suspicious_link" in pattern_ids:
             immediate = "Do not click the link. Go to the official website or app instead."
         elif "impersonation_bank" in pattern_ids:
@@ -410,6 +524,11 @@ class CourtroomEngine:
             script = (
                 "Someone wants me to pay a deposit for an online sale. "
                 "I will only pay in person or through the official platform. I will not use Cash App, Zelle, or wire transfer."
+            )
+        elif "package_delivery" in pattern_ids:
+            script = (
+                "I received a delivery message with a link. I will not click it. "
+                "Can you help me verify it through the official carrier website?"
             )
         elif score >= 70:
             script = (

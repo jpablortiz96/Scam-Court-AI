@@ -10,6 +10,8 @@ class HeuristicBackend(BaseBackend):
     Requires no model download, no GPU, and starts instantly.
     """
 
+    model_backend = "heuristic_v1"
+
     def __init__(self) -> None:
         self._engine = CourtroomEngine()
 

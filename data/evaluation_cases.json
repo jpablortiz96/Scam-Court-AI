@@ -1,24 +1,24 @@
 [
   {
     "id": "eval-001",
-    "input": "URGENT: Your Netflix subscription has been paused. Update your payment method at http://netflix-billing.ml/update to continue watching.",
-    "expected_verdict": "SCAM",
-    "min_risk_score": 70,
-    "required_flags": ["impersonation", "urgency", "suspicious_link"],
-    "notes": "Classic brand-impersonation phishing with urgency and suspicious domain."
+    "input": "URGENT: Your Netflix subscription has been paused. Verify your identity immediately at http://netflix-billing.ml/update to continue watching. Click here now.",
+    "expected_shield_verdict": "VERIFY FIRST",
+    "min_risk_score": 60,
+    "required_flags": ["urgency", "suspicious_link", "unknown_link_action", "impersonation_bank"],
+    "notes": "Classic brand-impersonation phishing with urgency, suspicious domain, and verify-your-identity hook. Shield: VERIFY FIRST (not STOP because no payment or OTP)."
   },
   {
     "id": "eval-002",
-    "input": "Congrats! You've won a $1,000 Walmart gift card. Claim now at https://walmart-gifts.xyz/claim?token=abc123",
-    "expected_verdict": "SCAM",
+    "input": "Congrats! You've won a $1,000 Walmart gift card. Claim now before it expires at https://walmart-gifts.xyz/claim?token=abc123",
+    "expected_shield_verdict": "STOP",
     "min_risk_score": 70,
-    "required_flags": ["too_good_to_be_true", "suspicious_link"],
-    "notes": "Prize scam with too-good-to-be-true language."
+    "required_flags": ["too_good_to_be_true", "suspicious_link", "unknown_link_action", "urgency"],
+    "notes": "Prize scam with too-good-to-be-true language, link, and urgency."
   },
   {
     "id": "eval-003",
     "input": "Can you pick up milk on your way home?",
-    "expected_verdict": "LIKELY SAFE",
+    "expected_shield_verdict": "LOW VISIBLE RISK",
     "max_risk_score": 15,
     "required_flags": [],
     "notes": "Benign message with zero scam indicators."
@@ -26,17 +26,73 @@
   {
     "id": "eval-004",
     "input": "Dear customer, your package delivery failed. Please confirm your address and pay a $2.99 redelivery fee.",
-    "expected_verdict": "SUSPICIOUS",
-    "min_risk_score": 40,
-    "required_flags": ["urgency", "payment_request"],
-    "notes": "Delivery scam; lower urgency but still requests small payment."
+    "expected_shield_verdict": "STOP",
+    "min_risk_score": 70,
+    "required_flags": ["package_delivery", "payment_request"],
+    "notes": "Delivery scam with fee demand. Payment request triggers elder-safety policy → STOP."
   },
   {
     "id": "eval-005",
-    "input": "It's Grandma. I lost my purse and need $300 Western Union to get home. Don't tell Mom, she worries too much.",
-    "expected_verdict": "SCAM",
-    "min_risk_score": 75,
-    "required_flags": ["impersonation", "family", "payment_request"],
-    "notes": "Family impersonation with secrecy pressure."
+    "input": "Hi honey, it's me, Mom. I got a new phone and lost all my contacts. Can you Zelle me $500? Please don't tell Dad, she worries too much.",
+    "expected_shield_verdict": "STOP",
+    "min_risk_score": 70,
+    "required_flags": ["impersonation_family", "payment_request"],
+    "notes": "Family impersonation with secrecy pressure and payment request."
+  },
+  {
+    "id": "eval-006",
+    "input": "FedEx: Your package is waiting for delivery preferences. Click to schedule: https://fedex-delivery-update.com/track",
+    "expected_shield_verdict": "VERIFY FIRST",
+    "min_risk_score": 35,
+    "required_flags": ["package_delivery", "unknown_link_action"],
+    "notes": "FedEx package with unknown link. Must be VERIFY FIRST, never LOW VISIBLE RISK."
+  },
+  {
+    "id": "eval-007",
+    "input": "ALERT: Your Chase account has been suspended. Verify immediately at http://chase-verify-now.tk/login",
+    "expected_shield_verdict": "STOP",
+    "min_risk_score": 70,
+    "required_flags": ["impersonation_bank", "suspicious_link"],
+    "notes": "Bank suspended account + link. Must be STOP or high VERIFY FIRST."
+  },
+  {
+    "id": "eval-008",
+    "input": "Hey, this is Mike from IT. I need you to forward the 6-digit code I just sent to your phone. It's urgent.",
+    "expected_shield_verdict": "STOP",
+    "min_risk_score": 70,
+    "required_flags": ["otp_theft"],
+    "notes": "OTP/code request. Must be STOP."
+  },
+  {
+    "id": "eval-009",
+    "input": "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? Please don't tell Dad.",
+    "expected_shield_verdict": "STOP",
+    "min_risk_score": 70,
+    "required_flags": ["impersonation_family", "payment_request"],
+    "notes": "Family new number + money. Must be STOP."
+  },
+  {
+    "id": "eval-010",
+    "input": "Hey, are we still meeting for coffee at 3?",
+    "expected_shield_verdict": "LOW VISIBLE RISK",
+    "max_risk_score": 20,
+    "required_flags": [],
+    "notes": "Safe casual message with no link or action. Must be LOW VISIBLE RISK."
+  },
+  {
+    "id": "eval-011",
+    "input": "[VISION-ONLY] FedEx: Delivery scheduled for tomorrow. Track at https://fedex-track.net/abc123",
+    "expected_shield_verdict": "VERIFY FIRST",
+    "min_risk_score": 35,
+    "required_flags": ["package_delivery", "unknown_link_action"],
+    "notes": "Screenshot-only with extracted FedEx text. Must be VERIFY FIRST."
+  },
+  {
+    "id": "eval-012",
+    "input": "[VISION-ONLY] [Screenshot unreadable or no text extracted]",
+    "expected_shield_verdict": "VERIFY FIRST",
+    "min_risk_score": 35,
+    "required_flags": [],
+    "notes": "Screenshot-only with no extracted text. Must be VERIFY FIRST, not LOW RISK."
   }
 ]

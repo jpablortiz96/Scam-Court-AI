@@ -23,6 +23,296 @@ from courtroom.config import get_vision_model_id
 from courtroom.engine import CourtroomEngine
 
 # ---------------------------------------------------------------------------
+# Internationalization + theme state
+# ---------------------------------------------------------------------------
+_current_lang: str = "en"
+_current_theme: str = "dark"
+
+TRANSLATIONS: dict[str, dict[str, str]] = {
+    "en": {
+        # Header
+        "app_subtitle": "3-Second Scam Shield + AI Courtroom Explanation for the people you protect.",
+        # Tabs
+        "tab_shield": "Shield",
+        "tab_court": "Court",
+        "tab_call": "Suspicious Call",
+        "tab_companion": "Companion Preview",
+        # Shield
+        "shield_subtitle": "For suspicious messages or call summaries. Get a 3-second safety verdict.",
+        "section_submit_evidence": "Paste a suspicious message",
+        "input_placeholder": "WhatsApp, SMS, email, or screenshot text…",
+        "upload_screenshot": "Or upload a screenshot",
+        "upload_hint": "PNG, JPG, JPEG · WhatsApp, SMS, email, marketplace, or fake invoice screenshot",
+        "btn_analyze": "Analyze",
+        "btn_analyze_court": "Bring to Court",
+        "btn_random_example": "Random Example",
+        "btn_clear": "Clear",
+        "quick_examples": "Quick Load",
+        # Shield output
+        "shield_empty": "Paste a message and tap <strong>Analyze</strong> to see your Shield verdict.",
+        "shield_score_label": "Risk score",
+        "shield_script_label": "What to tell a trusted contact",
+        "shield_court_hint": "Switch to the <strong>Court</strong> tab for a full explanation of why this message is risky.",
+        # Court
+        "court_subtitle": "Full AI courtroom explanation. See Detective, Prosecutor, Defender, Judge, and Clerk.",
+        "court_input_label": "Submit Evidence",
+        "court_members": "Court Members",
+        "export_json": "Report JSON",
+        "export_accordion": "Export Report JSON",
+        # Role titles/subtitles (render-time)
+        "role_detective": "Detective",
+        "role_prosecutor": "Prosecutor",
+        "role_defender": "Defender",
+        "role_judge": "Judge",
+        "role_clerk": "Clerk",
+        "role_subtitle_detective": "Sharp, observant, factual",
+        "role_subtitle_prosecutor": "Persuasive, dramatic, logical",
+        "role_subtitle_defender": "Skeptical, fair, cautious",
+        "role_subtitle_judge": "Authoritative, measured, decisive",
+        "role_subtitle_clerk": "Helpful, calm, actionable",
+        "role_title_detective": "Detective Evidence Board",
+        "role_title_prosecutor": "Prosecutor Argument",
+        "role_title_defender": "Defender Argument",
+        "role_title_judge": "Judge Verdict",
+        "role_title_clerk": "Safety Clerk",
+        "role_waiting": "Waiting for evidence…",
+        "role_no_red_flags": "<p><em>No red flags detected.</em></p>",
+        "role_safe_reply": "Safe Reply",
+        "role_next_steps": "Next Steps",
+        # Gauge
+        "gauge_risk_score": "RISK SCORE",
+        "gauge_waiting": "WAITING",
+        "gauge_waiting_rationale": "Submit evidence to begin the trial.",
+        # Call
+        "call_subtitle": "For active phone calls. Check what is happening right now.",
+        "call_title": "Quick phone-call check",
+        "call_hint": "Check every box that applies to the call you or a loved one is on.",
+        "call_money": "They are asking for money, gift cards, or crypto",
+        "call_code": "They are asking for a code, password, or PIN",
+        "call_family": "They claim to be family using a new number",
+        "call_urgency": "They create urgency, fear, or a deadline",
+        "call_secrecy": "They ask you to keep the call secret",
+        "btn_check_call": "Check the Call",
+        "btn_reset": "Reset",
+        "call_warning_signs": "Warning signs",
+        "call_quick_score": "Quick risk score",
+        # Call trusted scripts
+        "call_script_code": "I am on a call where someone is asking for my password or a code. I hung up. Can you help me change my account passwords just in case?",
+        "call_script_family_money": "Someone is pretending to be family and asking for money on the phone. I hung up. Can you help me reach [name] on the number we already have?",
+        "call_script_money": "I just hung up on a call asking me to send money or buy gift cards. Please remind me not to send anything until I verify through an official channel.",
+        "call_script_family": "Someone called claiming to be family from a new number. I hung up. Can you help me reach them on the number we already know?",
+        "call_script_high": "I just hung up on a suspicious phone call. The person was pressuring me. Can you sit with me while I report it?",
+        "call_script_medium": "I received a suspicious call and I am not sure it is real. I told them I would call back. Can you help me verify the number?",
+        "call_script_low": "I received a phone call that seemed okay, but I wanted to be cautious. No action needed right now.",
+        "call_action_hangup": "Hang up now and verify independently using a trusted number.",
+        # Companion
+        "companion_subtitle": "Simulation of future WhatsApp/SMS/Marketplace integration.",
+        "companion_title": "Paste a message to preview",
+        "companion_btn_analyze": "Analyze Selected Message",
+        "companion_whatsapp": "WhatsApp preview",
+        "companion_sms": "SMS preview",
+        "companion_marketplace": "Marketplace preview",
+        "companion_whatsapp_tab": "WhatsApp",
+        "companion_sms_tab": "SMS",
+        "companion_marketplace_tab": "Marketplace",
+        "companion_empty_whatsapp": "Analyze a message first to preview the WhatsApp companion card.",
+        "companion_empty_sms": "Analyze a message first to preview the SMS companion card.",
+        "companion_empty_marketplace": "Analyze a message first to preview the Marketplace companion card.",
+        "companion_unknown_sender": "Unknown sender",
+        "companion_buyer_message": "Buyer message",
+        "companion_safe_reply": "Your safe reply",
+        "companion_recommended_response": "Recommended response",
+        "companion_now": "Now",
+        "companion_draft": "Draft",
+        "companion_platform": "Platform: Marketplace",
+        "companion_action_label": "Action:",
+        "companion_switch_court": "Switch to the <strong>Court</strong> tab for the full explanation (score: {score})",
+        "companion_disclaimer": "Prototype simulation — not a real extension",
+        "companion_empty_desc": "This panel previews how Scam Court AI would appear inside {platform}.",
+        # Vision
+        "vision_title": "Vision Witness",
+        "vision_status_inactive": "Inactive — paste text for analysis",
+        "vision_status_loaded": "Loaded — vision backend ready",
+        "vision_status_analyzed": "Analyzed",
+        "vision_status_failed": "Failed — verify independently",
+        "vision_status_not_available": "Not Available — install transformers + torch",
+        "vision_type_label": "Type:",
+        "vision_extracted_label": "Extracted text:",
+        "vision_clues_label": "Visual clues:",
+        "vision_error_label": "Error:",
+        "vision_no_analysis": "<p>Screenshot received. Vision analysis is not active yet. Paste the message text for full analysis.</p>",
+        "vision_confidence": "Confidence",
+        "vision_privacy": "Model: {model} · Screenshot processed only for this session.",
+        # Examples
+        "ex_family": "Family Impersonation",
+        "ex_bank": "Fake Bank Alert",
+        "ex_otp": "OTP / Code Theft",
+        "ex_marketplace": "Marketplace Deposit Scam",
+        "ex_invoice": "Fake Invoice",
+        # Controls
+        "lang_label": "Language",
+        "theme_label": "Theme",
+        "theme_dark": "Dark",
+        "theme_light": "Light",
+        # Footer
+        "footer_tagline": "Scam Court AI · Hugging Face Build Small Hackathon · CPU-first · Model-ready",
+        "backend_text": "Text",
+        "backend_vision": "Vision",
+        "backend_model": "Model",
+        "backend_cache": "Cache",
+    },
+    "es": {
+        # Header
+        "app_subtitle": "Escudo Anti-Estafa de 3 Segundos + Explicación de la Corte de IA para quienes proteges.",
+        # Tabs
+        "tab_shield": "Escudo",
+        "tab_court": "Corte",
+        "tab_call": "Llamada Sospechosa",
+        "tab_companion": "Vista Previa del Companion",
+        # Shield
+        "shield_subtitle": "Para mensajes sospechosos o resúmenes de llamadas. Obtén un veredicto de seguridad en 3 segundos.",
+        "section_submit_evidence": "Pega un mensaje sospechoso",
+        "input_placeholder": "Texto de WhatsApp, SMS, correo o captura de pantalla…",
+        "upload_screenshot": "O sube una captura de pantalla",
+        "upload_hint": "PNG, JPG, JPEG · captura de WhatsApp, SMS, correo, marketplace o factura falsa",
+        "btn_analyze": "Analizar",
+        "btn_analyze_court": "Llevar a la Corte",
+        "btn_random_example": "Ejemplo Aleatorio",
+        "btn_clear": "Borrar",
+        "quick_examples": "Carga Rápida",
+        # Shield output
+        "shield_empty": "Pega un mensaje y toca <strong>Analizar</strong> para ver tu veredicto del Escudo.",
+        "shield_score_label": "Puntuación de riesgo",
+        "shield_script_label": "Qué decirle a un contacto de confianza",
+        "shield_court_hint": "Cambia a la pestaña <strong>Corte</strong> para una explicación completa de por qué este mensaje es riesgoso.",
+        # Court
+        "court_subtitle": "Explicación completa de la corte de IA. Ve a Detective, Fiscal, Defensor, Juez y Secretario.",
+        "court_input_label": "Enviar evidencia",
+        "court_members": "Miembros de la Corte",
+        "export_json": "JSON del Informe",
+        "export_accordion": "Exportar JSON del Informe",
+        # Role titles/subtitles
+        "role_detective": "Detective",
+        "role_prosecutor": "Fiscal",
+        "role_defender": "Defensor",
+        "role_judge": "Juez",
+        "role_clerk": "Secretario",
+        "role_subtitle_detective": "Agudo, observador, factual",
+        "role_subtitle_prosecutor": "Persuasivo, dramático, lógico",
+        "role_subtitle_defender": "Escéptico, justo, cauteloso",
+        "role_subtitle_judge": "Autoritario, mesurado, decisivo",
+        "role_subtitle_clerk": "Servicial, calmado, accionable",
+        "role_title_detective": "Tablero de Evidencia del Detective",
+        "role_title_prosecutor": "Argumento del Fiscal",
+        "role_title_defender": "Argumento del Defensor",
+        "role_title_judge": "Veredicto del Juez",
+        "role_title_clerk": "Secretario de Seguridad",
+        "role_waiting": "Esperando evidencia…",
+        "role_no_red_flags": "<p><em>No se detectaron señales de alerta.</em></p>",
+        "role_safe_reply": "Respuesta Segura",
+        "role_next_steps": "Próximos Pasos",
+        # Gauge
+        "gauge_risk_score": "PUNTUACIÓN DE RIESGO",
+        "gauge_waiting": "ESPERANDO",
+        "gauge_waiting_rationale": "Envía evidencia para comenzar el juicio.",
+        # Call
+        "call_subtitle": "Para llamadas telefónicas activas. Comprueba qué está pasando ahora mismo.",
+        "call_title": "Revisión rápida de llamada",
+        "call_hint": "Marca cada casilla que aplique a la llamada en la que tú o un ser querido están.",
+        "call_money": "Pidieron dinero, tarjetas de regalo o cripto",
+        "call_code": "Pidieron un código, contraseña o PIN",
+        "call_family": "Dicen ser familia usando un nuevo número",
+        "call_urgency": "Generan urgencia, miedo o una fecha límite",
+        "call_secrecy": "Te piden que mantengas la llamada en secreto",
+        "btn_check_call": "Revisar Llamada",
+        "btn_reset": "Restablecer",
+        "call_warning_signs": "Señales de alerta",
+        "call_quick_score": "Puntuación rápida de riesgo",
+        # Call trusted scripts
+        "call_script_code": "Estoy en una llamada donde alguien me pide mi contraseña o un código. Colgué. ¿Puedes ayudarme a cambiar las contraseñas de mis cuentas por si acaso?",
+        "call_script_family_money": "Alguien se hace pasar por un familiar y me pide dinero por teléfono. Colgué. ¿Puedes ayudarme a contactar a [nombre] en el número que ya tenemos?",
+        "call_script_money": "Acabo de colgar una llamada donde me pedían enviar dinero o comprar tarjetas de regalo. Por favor recuérdame no enviar nada hasta verificar por un canal oficial.",
+        "call_script_family": "Alguien llamó diciendo ser un familiar desde un nuevo número. Colgué. ¿Puedes ayudarme a contactarlos en el número que ya conocemos?",
+        "call_script_high": "Acabo de colgar una llamada sospechosa. La persona me presionaba. ¿Puedes acompañarme mientras la reporto?",
+        "call_script_medium": "Recibí una llamada sospechosa y no estoy seguro de que sea real. Les dije que devolvería la llamada. ¿Puedes ayudarme a verificar el número?",
+        "call_script_low": "Recibí una llamada telefónica que parecía estar bien, pero quise ser cauteloso. No se necesita acción por ahora.",
+        "call_action_hangup": "Cuelga ahora y verifica de forma independiente usando un número de confianza.",
+        # Companion
+        "companion_subtitle": "Simulación de la futura integración con WhatsApp/SMS/Marketplace.",
+        "companion_title": "Pega un mensaje para previsualizar",
+        "companion_btn_analyze": "Analizar Mensaje Seleccionado",
+        "companion_whatsapp": "Vista previa de WhatsApp",
+        "companion_sms": "Vista previa de SMS",
+        "companion_marketplace": "Vista previa de Marketplace",
+        "companion_whatsapp_tab": "WhatsApp",
+        "companion_sms_tab": "SMS",
+        "companion_marketplace_tab": "Marketplace",
+        "companion_empty_whatsapp": "Analiza un mensaje primero para previsualizar la tarjeta companion de WhatsApp.",
+        "companion_empty_sms": "Analiza un mensaje primero para previsualizar la tarjeta companion de SMS.",
+        "companion_empty_marketplace": "Analiza un mensaje primero para previsualizar la tarjeta companion de Marketplace.",
+        "companion_unknown_sender": "Remitente desconocido",
+        "companion_buyer_message": "Mensaje del comprador",
+        "companion_safe_reply": "Tu respuesta segura",
+        "companion_recommended_response": "Respuesta recomendada",
+        "companion_now": "Ahora",
+        "companion_draft": "Borrador",
+        "companion_platform": "Plataforma: Marketplace",
+        "companion_action_label": "Acción:",
+        "companion_switch_court": "Cambia a la pestaña <strong>Corte</strong> para la explicación completa (puntuación: {score})",
+        "companion_disclaimer": "Simulación de prototipo — no es una extensión real",
+        "companion_empty_desc": "Este panel muestra cómo aparecería Scam Court AI dentro de {platform}.",
+        # Vision
+        "vision_title": "Testigo Visual",
+        "vision_status_inactive": "Inactivo — pega texto para analizar",
+        "vision_status_loaded": "Cargado — backend de visión listo",
+        "vision_status_analyzed": "Analizado",
+        "vision_status_failed": "Falló — verifica de forma independiente",
+        "vision_status_not_available": "No Disponible — instala transformers + torch",
+        "vision_type_label": "Tipo:",
+        "vision_extracted_label": "Texto extraído:",
+        "vision_clues_label": "Pistas visuales:",
+        "vision_error_label": "Error:",
+        "vision_no_analysis": "<p>Captura de pantalla recibida. El análisis de visión aún no está activo. Pega el texto del mensaje para un análisis completo.</p>",
+        "vision_confidence": "Confianza",
+        "vision_privacy": "Modelo: {model} · La captura se procesa solo para esta sesión.",
+        # Examples
+        "ex_family": "Suplantación de Familiar",
+        "ex_bank": "Alerta Bancaria Falsa",
+        "ex_otp": "Robo de OTP / Código",
+        "ex_marketplace": "Estafa de Depósito en Marketplace",
+        "ex_invoice": "Factura Falsa",
+        # Controls
+        "lang_label": "Idioma",
+        "theme_label": "Tema",
+        "theme_dark": "Oscuro",
+        "theme_light": "Claro",
+        # Footer
+        "footer_tagline": "Scam Court AI · Hugging Face Build Small Hackathon · CPU-first · Model-ready",
+        "backend_text": "Texto",
+        "backend_vision": "Visión",
+        "backend_model": "Modelo",
+        "backend_cache": "Caché",
+    },
+}
+
+
+def _t(key: str) -> str:
+    return TRANSLATIONS.get(_current_lang, TRANSLATIONS["en"]).get(key, key)
+
+
+def set_lang(lang: str) -> str:
+    global _current_lang
+    _current_lang = lang if lang in TRANSLATIONS else "en"
+    return _current_lang
+
+
+def set_theme(theme: str) -> str:
+    global _current_theme
+    _current_theme = theme if theme in ("dark", "light") else "dark"
+    return _current_theme
+
+
+# ---------------------------------------------------------------------------
 # Load local SVG assets
 # ---------------------------------------------------------------------------
 _ASSET_DIR = pathlib.Path(__file__).parent / "assets"
@@ -40,12 +330,12 @@ ROLE_SVGS = {
     "clerk": _load_svg("clerk"),
 }
 
-ROLE_SUBTITLES = {
-    "detective": "Red Flags",
-    "prosecutor": "The Case",
-    "defender": "Devil's Advocate",
-    "judge": "The Ruling",
-    "clerk": "Next Steps",
+ROLE_SUBTITLE_KEYS = {
+    "detective": "role_subtitle_detective",
+    "prosecutor": "role_subtitle_prosecutor",
+    "defender": "role_subtitle_defender",
+    "judge": "role_subtitle_judge",
+    "clerk": "role_subtitle_clerk",
 }
 
 
@@ -59,16 +349,16 @@ def _build_role_css(svgs: dict[str, str], subtitles: dict[str, str]) -> str:
         bg_rules.append(
             f".role-btn-{role} {{ background-image: {uri} !important; "
             f"background-repeat: no-repeat !important; "
-            f"background-position: center 14px !important; "
-            f"background-size: 44px 44px !important; }}"
+            f"background-position: center 16px !important; "
+            f"background-size: 40px 40px !important; }}"
         )
     sub_rules = []
     for role, sub in subtitles.items():
         sub_rules.append(
             f".role-btn-{role}::after {{ content: '{sub}'; display: block; "
-            f"font-family: 'Inter', sans-serif; font-size: 0.6rem; "
-            f"color: rgba(197, 160, 89, 0.55); text-transform: uppercase; "
-            f"letter-spacing: 1.2px; margin-top: 3px; font-weight: 500; }}"
+            f"font-family: 'Inter', sans-serif; font-size: 0.58rem; "
+            f"color: var(--text-tertiary); text-transform: uppercase; "
+            f"letter-spacing: 1px; margin-top: 4px; font-weight: 600; }}"
         )
     return "\n".join(bg_rules + sub_rules)
 
@@ -76,559 +366,952 @@ def _build_role_css(svgs: dict[str, str], subtitles: dict[str, str]) -> str:
 # ---------------------------------------------------------------------------
 # Custom CSS — premium dark courtroom aesthetic + accessible Shield Mode
 # ---------------------------------------------------------------------------
-COURT_CSS = f"""
+def _build_css(role_subtitles: dict[str, str]) -> str:
+    return f"""
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {{
-  --wood-dark: #120d08;
-  --wood-mid: #1a120b;
-  --gold: #c5a059;
-  --gold-light: #e8d5a3;
-  --gold-dim: rgba(197, 160, 89, 0.12);
-  --red-flag: #c0392b;
-  --green-safe: #27ae60;
-  --amber-warn: #f39c12;
-  --parchment: #fdfbf7;
+  --bg: #0a0c12;
+  --bg-elevated: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.07);
+  --text-primary: #f0f0f0;
+  --text-secondary: rgba(240,240,240,0.55);
+  --text-tertiary: rgba(240,240,240,0.32);
+  --accent: #4ecdc4;
+  --accent-dim: rgba(78,205,196,0.12);
+  --accent-glow: rgba(78,205,196,0.18);
+  --stop: #e85d5d;
+  --stop-bg: rgba(232,93,93,0.08);
+  --stop-glow: rgba(232,93,93,0.18);
+  --verify: #f0a040;
+  --verify-bg: rgba(240,160,64,0.08);
+  --verify-glow: rgba(240,160,64,0.18);
+  --safe: #4cd97b;
+  --safe-bg: rgba(76,217,123,0.08);
+  --safe-glow: rgba(76,217,123,0.18);
 }}
 
 body {{
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #0c0805 0%, #120d08 40%, #1a120b 100%);
-  color: var(--parchment);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(78,205,196,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(78,205,196,0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #0c0e14 0%, #0a0c12 50%, #080a10 100%) !important;
+  color: var(--text-primary) !important;
   min-height: 100vh;
 }}
 
 .gradio-container {{
   background: transparent !important;
-  max-width: 1280px !important;
+  max-width: 1200px !important;
+  padding: 0 1.5rem !important;
 }}
 
-/* Header */
+/* Hero */
 #court-header {{
   text-align: center;
-  padding: 2.2rem 1rem 1.4rem;
-  border-bottom: 1px solid rgba(197, 160, 89, 0.18);
-  margin-bottom: 1.8rem;
-  position: relative;
-}}
-#court-header::after {{
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 140px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  padding: 3.5rem 1rem 2.5rem;
+  margin-bottom: 0.5rem;
 }}
 #court-header h1 {{
   font-family: 'Playfair Display', serif;
-  font-size: 2.6rem;
-  color: var(--gold-light);
+  font-size: 3rem;
+  color: var(--text-primary);
   margin: 0;
-  letter-spacing: 2px;
+  letter-spacing: -0.5px;
   font-weight: 700;
 }}
 #court-header p {{
-  color: var(--gold);
-  font-size: 1rem;
-  margin-top: 0.5rem;
-  opacity: 0.8;
-  font-weight: 300;
-  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  margin-top: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
 }}
 
-/* Mode tabs */
+/* Tabs */
 .mode-tabs > .tab-nav {{
-  border-bottom: 1px solid rgba(197, 160, 89, 0.18) !important;
+  border-bottom: 1px solid var(--border) !important;
+  margin-bottom: 2rem !important;
 }}
 .mode-tabs .tab-nav button {{
   background: transparent !important;
-  color: var(--gold) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.6px !important;
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
   border: none !important;
   border-bottom: 2px solid transparent !important;
-  padding: 0.8rem 1.2rem !important;
+  padding: 0.9rem 1.4rem !important;
+  font-size: 0.9rem !important;
+  transition: all 0.2s ease !important;
 }}
 .mode-tabs .tab-nav button.selected {{
-  color: var(--gold-light) !important;
-  border-bottom-color: var(--gold) !important;
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--accent) !important;
+  font-weight: 600 !important;
+}}
+.mode-tabs .tab-nav button:hover:not(.selected) {{
+  color: var(--text-primary) !important;
 }}
 
-/* Input panel card */
+/* Panels */
 .input-panel {{
-  background: rgba(253, 251, 247, 0.02);
-  border: 1px solid rgba(197, 160, 89, 0.1);
-  border-radius: 16px;
-  padding: 1.4rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.6rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}}
+.input-panel:hover {{
+  border-color: rgba(255,255,255,0.1);
+}}
+
+/* Section labels */
+.section-label {{
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}}
+
+/* Forms */
+textarea, input {{
+  background: rgba(255,255,255,0.03) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}}
+textarea:focus, input:focus {{
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-dim) !important;
+}}
+textarea::placeholder {{
+  color: var(--text-tertiary) !important;
+}}
+
+/* Buttons */
+button.primary {{
+  background: var(--accent) !important;
+  color: #0c0e14 !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  letter-spacing: 0.2px !important;
+  transition: all 0.2s ease !important;
+  padding: 0.6rem 1.2rem !important;
+}}
+button.primary:hover {{
+  filter: brightness(1.15) !important;
+  transform: translateY(-1px) !important;
+}}
+button.secondary {{
+  background: rgba(255,255,255,0.04) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}}
+button.secondary:hover {{
+  background: rgba(255,255,255,0.08) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}}
+
+.example-btn {{
+  background: rgba(255,255,255,0.03) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  padding: 0.4rem 0.7rem !important;
+}}
+.example-btn:hover {{
+  background: rgba(255,255,255,0.07) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}}
+
+/* Shield verdict card */
+.shield-card {{
+  border-radius: 22px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}}
+.shield-card::before {{
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, var(--glow-color, transparent) 0%, transparent 70%);
+  opacity: 0.4;
+  pointer-events: none;
+}}
+.shield-card.stop {{
+  --glow-color: var(--stop-glow);
+  background: var(--stop-bg);
+  border-color: rgba(232,93,93,0.22);
+  color: var(--text-primary);
+  box-shadow: 0 0 40px var(--stop-glow), 0 4px 20px rgba(0,0,0,0.3);
+}}
+.shield-card.verify {{
+  --glow-color: var(--verify-glow);
+  background: var(--verify-bg);
+  border-color: rgba(240,160,64,0.22);
+  color: var(--text-primary);
+  box-shadow: 0 0 40px var(--verify-glow), 0 4px 20px rgba(0,0,0,0.3);
+}}
+.shield-card.safe {{
+  --glow-color: var(--safe-glow);
+  background: var(--safe-bg);
+  border-color: rgba(76,217,123,0.22);
+  color: var(--text-primary);
+  box-shadow: 0 0 40px var(--safe-glow), 0 4px 20px rgba(0,0,0,0.3);
+}}
+.shield-icon {{
+  font-size: 2.8rem;
+  margin-bottom: 0.8rem;
+  line-height: 1;
+}}
+.shield-verdict {{
+  font-family: 'Inter', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 0.4rem;
+}}
+.shield-score {{
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.2);
+  margin-bottom: 1.2rem;
+}}
+.shield-action {{
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto 1.5rem;
+  color: var(--text-secondary);
+}}
+.shield-script {{
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto;
+  color: var(--text-primary);
+}}
+.shield-script-label {{
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}}
+.shield-court-hint {{
+  margin-top: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+}}
+.shield-empty {{
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--text-tertiary);
+  font-size: 1rem;
+  font-weight: 400;
+}}
+
+/* Gauge */
+.gauge-container {{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}}
+.gauge-container::before {{
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.5;
+  pointer-events: none;
+}}
+.gauge-verdict {{
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-top: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}}
+.gauge-rationale {{
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.4rem;
+  max-width: 85%;
+  line-height: 1.6;
 }}
 
 /* Role selector */
 .role-selector {{
   display: flex;
   gap: 0.6rem;
-  margin: 1.2rem 0 0.3rem;
+  margin: 1.5rem 0 0.5rem;
 }}
-
 .role-btn {{
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  background: rgba(253, 251, 247, 0.02) !important;
-  border: 1px solid rgba(197, 160, 89, 0.14) !important;
-  border-radius: 14px !important;
-  color: var(--gold-light) !important;
-  font-family: 'Playfair Display', serif !important;
-  font-size: 0.85rem !important;
-  padding: 72px 0.3rem 0.7rem !important;
-  transition: all 0.3s ease !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  padding: 72px 0.4rem 0.9rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer !important;
   min-height: 124px !important;
   line-height: 1.2 !important;
   position: relative !important;
 }}
-
+.role-btn::before {{
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}}
+.role-btn:hover::before {{
+  opacity: 1;
+}}
 .role-btn:hover {{
-  background: rgba(197, 160, 89, 0.06) !important;
-  border-color: rgba(197, 160, 89, 0.45) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(78,205,196,0.1) !important;
 }}
-
 .role-btn:active {{
-  background: rgba(197, 160, 89, 0.14) !important;
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 28px rgba(197, 160, 89, 0.22), inset 0 0 14px rgba(197, 160, 89, 0.06) !important;
-  transform: translateY(0) !important;
+  background: rgba(78,205,196,0.1) !important;
+  border-color: var(--accent) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(78,205,196,0.15) !important;
 }}
 
-/* Active indicator bar */
+/* Active indicator */
 .active-indicator {{
   display: flex;
-  gap: 0.6rem;
-  margin-bottom: 0.8rem;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
 }}
 .active-bar {{
   flex: 1;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: transparent;
   transition: background 0.3s ease;
 }}
 .active-bar.on {{
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  background: var(--accent);
 }}
 
-/* Verdict gauge */
-.gauge-container {{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.2rem 1rem 0.8rem;
-  background: rgba(253, 251, 247, 0.02);
-  border: 1px solid rgba(197, 160, 89, 0.1);
-  border-radius: 16px;
-  margin-bottom: 1.2rem;
-}}
-.gauge-verdict {{
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  color: var(--gold-light);
-  margin-top: 0.5rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}}
-.gauge-rationale {{
-  font-size: 0.82rem;
-  color: rgba(253, 251, 247, 0.65);
-  text-align: center;
-  margin-top: 0.3rem;
-  max-width: 90%;
-  line-height: 1.5;
-}}
-
-/* Role content panel */
+/* Role panel */
 .role-panel {{
-  background: rgba(253, 251, 247, 0.02);
-  border: 1px solid rgba(197, 160, 89, 0.1);
-  border-radius: 16px;
-  padding: 1.6rem;
-  min-height: 300px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+}}
+.role-panel::before {{
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.3;
+  pointer-events: none;
 }}
 .role-header {{
   display: flex;
   align-items: center;
-  gap: 1.2rem;
-  margin-bottom: 1.2rem;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(197, 160, 89, 0.1);
+  border-bottom: 1px solid var(--border);
 }}
 .role-avatar svg {{
-  width: 56px;
-  height: 56px;
-  filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.18));
+  width: 48px;
+  height: 48px;
 }}
 .role-title {{
   font-family: 'Playfair Display', serif;
-  font-size: 1.35rem;
-  color: var(--gold-light);
+  font-size: 1.25rem;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
+  font-weight: 600;
 }}
 .role-subtitle {{
-  font-size: 0.72rem;
-  color: var(--gold);
-  opacity: 0.6;
-  margin: 0.2rem 0 0;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin: 0.25rem 0 0;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  font-weight: 500;
+  font-weight: 600;
 }}
 .role-body {{
-  color: rgba(253, 251, 247, 0.88);
-  line-height: 1.7;
+  color: var(--text-secondary);
+  line-height: 1.75;
   font-size: 0.95rem;
 }}
 .role-body ul, .role-body ol {{
   padding-left: 1.3rem;
-  margin: 0.8rem 0;
+  margin: 1rem 0;
 }}
 .role-body li {{
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }}
 .role-body strong {{
-  color: var(--gold-light);
+  color: var(--text-primary);
   font-weight: 600;
 }}
 .role-body em {{
-  color: rgba(253, 251, 247, 0.5);
+  color: var(--text-tertiary);
   font-style: italic;
 }}
 
-/* Shield Mode — high contrast, large type */
-.shield-card {{
-  border-radius: 18px;
-  padding: 2rem;
-  text-align: center;
-  margin-bottom: 1.2rem;
-  border: 3px solid;
-}}
-.shield-card.stop {{
-  background: rgba(192, 57, 43, 0.10);
-  border-color: var(--red-flag);
-  color: #f5b7b1;
-}}
-.shield-card.verify {{
-  background: rgba(243, 156, 18, 0.10);
-  border-color: var(--amber-warn);
-  color: #f9e79f;
-}}
-.shield-card.safe {{
-  background: rgba(39, 174, 96, 0.10);
-  border-color: var(--green-safe);
-  color: #abebc6;
-}}
-.shield-verdict {{
-  font-family: 'Inter', sans-serif;
-  font-size: 3.2rem;
-  font-weight: 800;
-  letter-spacing: 2px;
-  margin-bottom: 0.6rem;
-}}
-.shield-score {{
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}}
-.shield-action {{
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.5;
-  max-width: 720px;
-  margin: 0 auto 1.2rem;
-}}
-.shield-script {{
-  background: rgba(253, 251, 247, 0.06);
-  border-left: 4px solid var(--gold);
-  border-radius: 10px;
-  padding: 1rem 1.2rem;
-  text-align: left;
-  font-size: 1.05rem;
-  line-height: 1.55;
-  max-width: 720px;
-  margin: 0 auto;
-}}
-.shield-script-label {{
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--gold);
-  margin-bottom: 0.4rem;
-}}
-.shield-empty {{
-  text-align: center;
-  padding: 3rem 1rem;
-  opacity: 0.6;
-  font-size: 1.1rem;
-}}
-
-/* Suspicious Call checklist */
+/* Call checklist */
 .call-check {{
-  background: rgba(253, 251, 247, 0.02);
-  border: 1px solid rgba(197, 160, 89, 0.1);
-  border-radius: 14px;
-  padding: 1.2rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.4rem;
 }}
 .call-check label {{
-  font-size: 1rem !important;
-  color: rgba(253, 251, 247, 0.92) !important;
+  font-size: 0.95rem !important;
+  color: var(--text-secondary) !important;
+  font-weight: 400 !important;
 }}
 .call-check .wrap {{
-  padding: 0.7rem 0.6rem !important;
-  border-radius: 10px !important;
-  transition: background 0.2s ease !important;
+  padding: 0.8rem 0.7rem !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid transparent !important;
+  margin-bottom: 0.3rem !important;
+}}
+.call-check .wrap:hover {{
+  background: rgba(255,255,255,0.03) !important;
 }}
 .call-check .wrap:has(input:checked) {{
-  background: rgba(197, 160, 89, 0.12) !important;
-  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  background: var(--accent-dim) !important;
+  border-color: var(--accent) !important;
+}}
+.call-check .wrap:has(input:checked) label {{
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
 }}
 .call-check input[type="checkbox"] {{
-  width: 22px !important;
-  height: 22px !important;
-  accent-color: var(--gold) !important;
-}}
-.call-check input[type="checkbox"]:checked {{
-  background: var(--gold) !important;
+  width: 20px !important;
+  height: 20px !important;
+  accent-color: var(--accent) !important;
 }}
 
-/* Companion previews */
+/* Companion */
 .companion-phone {{
-  max-width: 420px;
+  max-width: 360px;
   margin: 0 auto;
-  border: 2px solid rgba(197, 160, 89, 0.25);
-  border-radius: 24px;
-  background: #0f0f0f;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #0a0a0a;
   overflow: hidden;
 }}
 .companion-header {{
-  background: rgba(197, 160, 89, 0.12);
-  padding: 0.7rem 1rem;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--gold-light);
+  background: rgba(255,255,255,0.04);
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--border);
 }}
 .companion-body {{
-  padding: 1rem;
-  min-height: 160px;
+  padding: 0.8rem;
+  min-height: 120px;
 }}
 .companion-bubble-in {{
-  background: #2c2c2c;
-  color: #eee;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
   border-radius: 14px 14px 14px 4px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.95rem;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
   line-height: 1.45;
 }}
 .companion-bubble-out {{
-  background: #005c4b;
-  color: #fff;
+  background: rgba(78,205,196,0.15);
+  color: var(--text-primary);
   border-radius: 14px 14px 4px 14px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.95rem;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
   line-height: 1.45;
   margin-left: auto;
 }}
 .companion-sms {{
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 16px;
-  padding: 1rem;
-  font-size: 0.95rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.75rem;
+  font-size: 0.88rem;
   line-height: 1.45;
-  color: #eee;
-  margin-bottom: 0.6rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
 }}
 .companion-sms-label {{
-  font-size: 0.75rem;
-  color: #888;
-  margin-bottom: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
 }}
 .companion-meta {{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
-  color: #888;
-  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
 }}
 .companion-shield {{
   display: inline-block;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-top: 0.6rem;
+  letter-spacing: 0.8px;
+  margin-top: 0.5rem;
 }}
 .companion-shield.stop {{
-  background: rgba(192, 57, 43, 0.25);
-  color: #f5b7b1;
+  background: var(--stop-bg);
+  color: var(--stop);
+  border: 1px solid rgba(232,93,93,0.2);
 }}
 .companion-shield.verify {{
-  background: rgba(243, 156, 18, 0.25);
-  color: #f9e79f;
+  background: var(--verify-bg);
+  color: var(--verify);
+  border: 1px solid rgba(240,160,64,0.2);
 }}
 .companion-shield.safe {{
-  background: rgba(39, 174, 96, 0.25);
-  color: #abebc6;
+  background: var(--safe-bg);
+  color: var(--safe);
+  border: 1px solid rgba(76,217,123,0.2);
+}}
+.companion-empty {{
+  text-align: center;
+  padding: 1.2rem 1rem;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+}}
+.companion-action {{
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}}
+.companion-court-hint {{
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}}
+.companion-disclaimer {{
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+  text-align: center;
+  letter-spacing: 0.3px;
 }}
 
-/* Vision Witness card */
+/* Vision */
 .vision-card {{
-  background: rgba(253, 251, 247, 0.02);
-  border: 1px solid rgba(197, 160, 89, 0.15);
-  border-radius: 14px;
-  padding: 1.2rem;
-  margin-top: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.4rem;
+  margin-top: 1.2rem;
+  position: relative;
+  overflow: hidden;
+}}
+.vision-card::before {{
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.25;
+  pointer-events: none;
 }}
 .vision-header {{
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--gold-light);
-  margin-bottom: 0.6rem;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
 }}
 .vision-status {{
   display: inline-block;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
 }}
 .vision-status.inactive {{
-  background: rgba(150, 150, 150, 0.2);
-  color: #ccc;
+  background: rgba(150,150,150,0.12);
+  color: var(--text-tertiary);
+  border: 1px solid rgba(150,150,150,0.15);
 }}
 .vision-status.loaded {{
-  background: rgba(197, 160, 89, 0.2);
-  color: var(--gold-light);
+  background: rgba(78,205,196,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(78,205,196,0.2);
 }}
 .vision-status.analyzed {{
-  background: rgba(39, 174, 96, 0.2);
-  color: #abebc6;
+  background: var(--safe-bg);
+  color: var(--safe);
+  border: 1px solid rgba(76,217,123,0.2);
 }}
 .vision-status.failed {{
-  background: rgba(192, 57, 43, 0.2);
-  color: #f5b7b1;
+  background: var(--stop-bg);
+  color: var(--stop);
+  border: 1px solid rgba(232,93,93,0.2);
 }}
 .vision-status.not_available {{
-  background: rgba(243, 156, 18, 0.2);
-  color: #f9e79f;
+  background: var(--verify-bg);
+  color: var(--verify);
+  border: 1px solid rgba(240,160,64,0.2);
+}}
+.vision-body {{
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}}
+.vision-body p {{
+  margin: 0.4rem 0;
+}}
+.vision-body strong {{
+  color: var(--text-primary);
+  font-weight: 600;
+}}
+.vision-privacy {{
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
 }}
 
-/* Backend status indicator */
+/* Backend status */
 .backend-status {{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  background: rgba(253, 251, 247, 0.04);
-  border: 1px solid rgba(197, 160, 89, 0.15);
-  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}}
+.backend-status:hover {{
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
 }}
 .backend-status .dot {{
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--green-safe);
+  background: var(--safe);
+  box-shadow: 0 0 6px var(--safe);
 }}
 .backend-status .dot.off {{
-  background: var(--amber-warn);
-}}
-.vision-body {{
-  font-size: 0.95rem;
-  color: rgba(253, 251, 247, 0.85);
-  line-height: 1.5;
-}}
-.vision-privacy {{
-  font-size: 0.75rem;
-  color: #888;
-  margin-top: 0.6rem;
+  background: var(--verify);
+  box-shadow: 0 0 6px var(--verify);
 }}
 
-/* Forms */
-textarea, input {{
-  background: rgba(253, 251, 247, 0.04) !important;
-  color: var(--parchment) !important;
-  border: 1px solid rgba(197, 160, 89, 0.18) !important;
-  border-radius: 10px !important;
-  font-size: 0.95rem !important;
+/* Utility bar / footer dock */
+.utility-bar {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.9rem 1.4rem;
+  margin-top: 3rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
 }}
-textarea::placeholder {{
-  color: rgba(253, 251, 247, 0.3) !important;
+.utility-bar::before {{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
 }}
-
-button.primary {{
-  background: linear-gradient(135deg, var(--gold), #b08d4b) !important;
-  color: var(--wood-dark) !important;
-  font-weight: 700 !important;
-  border: none !important;
-  border-radius: 10px !important;
-  letter-spacing: 0.5px !important;
-  transition: all 0.2s ease !important;
+.utility-section {{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }}
-button.primary:hover {{
-  filter: brightness(1.1) !important;
-  box-shadow: 0 4px 18px rgba(197, 160, 89, 0.28) !important;
+.utility-section-label {{
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  margin-right: 0.3rem;
 }}
-
-.example-btn {{
-  background: rgba(253, 251, 247, 0.03) !important;
-  color: var(--gold-light) !important;
-  border: 1px solid rgba(197, 160, 89, 0.2) !important;
-  border-radius: 8px !important;
-  font-size: 0.8rem !important;
-}}
-.example-btn:hover {{
-  background: rgba(197, 160, 89, 0.1) !important;
-  border-color: var(--gold) !important;
-}}
-
-.section-label {{
+.utility-brand {{
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
   font-family: 'Playfair Display', serif;
-  color: var(--gold-light);
-  font-size: 1.05rem;
-  margin-bottom: 0.6rem;
-  letter-spacing: 0.5px;
+}}
+.utility-meta {{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}}
+.utility-controls {{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}}
+.utility-pill {{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}}
+.utility-pill:hover {{
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.12);
+}}
+.utility-pill select {{
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  padding-right: 0.4rem;
 }}
 
+/* Accordion */
 .gr-accordion {{
-  background: rgba(253, 251, 247, 0.015) !important;
-  border: 1px solid rgba(197, 160, 89, 0.08) !important;
-  border-radius: 12px !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
 }}
 
 footer {{ display: none !important; }}
 
-{_build_role_css(ROLE_SVGS, ROLE_SUBTITLES)}
+/* -------------------- Light mode -------------------- */
+body.light {{
+  --bg: #f5f5f0;
+  --bg-elevated: #ffffff;
+  --border: rgba(0,0,0,0.06);
+  --text-primary: #1a1a1a;
+  --text-secondary: rgba(0,0,0,0.55);
+  --text-tertiary: rgba(0,0,0,0.35);
+  --accent: #2a9d8f;
+  --accent-dim: rgba(42,157,143,0.08);
+  --stop: #c0392b;
+  --stop-bg: rgba(192,57,43,0.06);
+  --verify: #d68910;
+  --verify-bg: rgba(214,137,16,0.06);
+  --safe: #27ae60;
+  --safe-bg: rgba(39,174,96,0.06);
+}}
+body.light {{
+  background: var(--bg) !important;
+  color: var(--text-primary) !important;
+}}
+body.light .gradio-container {{
+  background: transparent !important;
+}}
+body.light .companion-phone {{
+  background: #fff !important;
+}}
+body.light .companion-bubble-in {{
+  background: #f2f2f2 !important;
+  color: #1a1a1a !important;
+}}
+body.light .companion-bubble-out {{
+  background: #d1f0ea !important;
+  color: #154a3f !important;
+}}
+body.light textarea::placeholder {{
+  color: var(--text-tertiary) !important;
+}}
+body.light button.secondary {{
+  background: rgba(0,0,0,0.03) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}}
+body.light button.secondary:hover {{
+  background: rgba(0,0,0,0.06) !important;
+  color: var(--text-primary) !important;
+}}
+body.light .example-btn {{
+  background: rgba(0,0,0,0.02) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}}
+body.light .example-btn:hover {{
+  background: rgba(0,0,0,0.05) !important;
+  color: var(--text-primary) !important;
+}}
+body.light .call-check .wrap:hover {{
+  background: rgba(0,0,0,0.02) !important;
+}}
+body.light .role-btn:hover {{
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+}}
+
+/* -------------------- Responsive -------------------- */
+@media (max-width: 1200px) {{
+  .gradio-container {{ max-width: 1100px !important; padding: 0 1rem !important; }}
+}}
+
+@media (max-width: 899px) {{
+  #court-header {{ padding: 2.5rem 1rem 1.5rem !important; }}
+  #court-header h1 {{ font-size: 2.2rem !important; }}
+  .role-selector {{
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
+  }}
+  .role-btn {{
+    flex: 0 0 auto !important;
+    min-width: 88px !important;
+    min-height: 102px !important;
+    padding: 56px 0.4rem 0.6rem !important;
+    background-size: 34px 34px !important;
+    background-position: center 10px !important;
+  }}
+  .role-btn::after {{ font-size: 0.55rem !important; letter-spacing: 0.6px !important; }}
+  .input-panel {{ padding: 1.2rem !important; }}
+  .utility-bar {{ flex-direction: column !important; align-items: flex-start !important; gap: 0.8rem !important; }}
+}}
+
+@media (max-width: 639px) {{
+  .gradio-container {{ padding: 0 0.8rem !important; }}
+  #court-header {{ padding: 2rem 0.8rem 1.2rem !important; }}
+  #court-header h1 {{ font-size: 1.8rem !important; }}
+  .mode-tabs .tab-nav button {{ padding: 0.7rem 0.9rem !important; font-size: 0.8rem !important; }}
+  .input-panel {{ border-radius: 14px !important; }}
+  .shield-verdict {{ font-size: 1.8rem !important; }}
+  .shield-action {{ font-size: 1rem !important; }}
+  .companion-phone {{ border-radius: 16px !important; }}
+  .top-controls {{
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: stretch !important;
+  }}
+  .utility-bar {{ padding: 0.8rem 1rem !important; border-radius: 12px !important; }}
+}}
+
+{_build_role_css(ROLE_SVGS, role_subtitles)}
 """
+
+
+
+
+def _role_subtitles_for_theme() -> dict[str, str]:
+    return {role: _t(key) for role, key in ROLE_SUBTITLE_KEYS.items()}
 
 # ---------------------------------------------------------------------------
 # Backend instance (heuristic by default; smollm3 when SCAM_COURT_BACKEND=smollm3)
@@ -640,7 +1323,7 @@ backend = get_backend()
 # ---------------------------------------------------------------------------
 EXAMPLES = [
     {
-        "label": "Family Impersonation",
+        "label": _t("ex_family"),
         "text": (
             "Hi honey, it's Mom. I got a new phone and lost all my contacts. "
             "Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. "
@@ -648,7 +1331,7 @@ EXAMPLES = [
         ),
     },
     {
-        "label": "Fake Bank Alert",
+        "label": _t("ex_bank"),
         "text": (
             "ALERT: Your Chase account has been suspended due to suspicious login activity. "
             "Verify your identity immediately at http://chase-verify-now.tk/login to avoid permanent closure. "
@@ -656,7 +1339,7 @@ EXAMPLES = [
         ),
     },
     {
-        "label": "OTP / Code Theft",
+        "label": _t("ex_otp"),
         "text": (
             "Hey, this is Mike from IT support. We're doing a security audit and I need you to forward "
             "the 6-digit code I just sent to your phone. It's urgent — the CEO's account is compromised "
@@ -664,7 +1347,7 @@ EXAMPLES = [
         ),
     },
     {
-        "label": "Marketplace Deposit Scam",
+        "label": _t("ex_marketplace"),
         "text": (
             "Hi! I'm very interested in buying your couch. I can't pick it up in person because I'm a "
             "marine engineer offshore, but I'll send a courier. Please pay a $150 holding deposit via "
@@ -672,7 +1355,7 @@ EXAMPLES = [
         ),
     },
     {
-        "label": "Fake Invoice",
+        "label": _t("ex_invoice"),
         "text": (
             "Invoice #8921-REM is now 7 days overdue. Total due: $4,250.00. "
             "Please remit payment immediately to avoid late fees and service interruption. "
@@ -714,14 +1397,14 @@ def _render_gauge(score: int, verdict: str, rationale: str) -> str:
     return f"""
     <div class="gauge-container">
       <svg width="140" height="140" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r="{r}" fill="none" stroke="rgba(197,160,89,0.10)" stroke-width="7"/>
-        <circle cx="70" cy="70" r="{r}" fill="none" stroke="{color}" stroke-width="7"
+        <circle cx="70" cy="70" r="{r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+        <circle cx="70" cy="70" r="{r}" fill="none" stroke="{color}" stroke-width="6"
           stroke-dasharray="{c:.2f}" stroke-dashoffset="{offset:.2f}"
           stroke-linecap="round" transform="rotate(-90 70 70)"/>
-        <text x="70" y="68" text-anchor="middle" fill="#e8d5a3" font-size="34" font-weight="700"
-          font-family="'Playfair Display', serif">{score}</text>
-        <text x="70" y="88" text-anchor="middle" fill="#c5a059" font-size="9"
-          font-family="'Inter', sans-serif" letter-spacing="2">RISK SCORE</text>
+        <text x="70" y="66" text-anchor="middle" fill="var(--text-primary)" font-size="32" font-weight="700"
+          font-family="'Inter', sans-serif">{score}</text>
+        <text x="70" y="84" text-anchor="middle" fill="var(--text-tertiary)" font-size="8"
+          font-family="'Inter', sans-serif" letter-spacing="2">{html.escape(_t("gauge_risk_score"))}</text>
       </svg>
       <div class="gauge-verdict">{html.escape(verdict)}</div>
       <div class="gauge-rationale">{html.escape(rationale)}</div>
@@ -740,27 +1423,27 @@ def _render_indicator(active_role: str | None) -> str:
 
 def _render_role(role: str, report_dict: dict | None) -> str:
     if not report_dict:
-        return '<div class="role-panel"><div class="role-body"><em>Waiting for evidence…</em></div></div>'
+        return f'<div class="role-panel"><div class="role-body"><em>{html.escape(_t("role_waiting"))}</em></div></div>'
 
     titles = {
-        "detective": "Detective Evidence Board",
-        "prosecutor": "Prosecutor Argument",
-        "defender": "Defender Argument",
-        "judge": "Judge Verdict",
-        "clerk": "Safety Clerk",
+        "detective": _t("role_title_detective"),
+        "prosecutor": _t("role_title_prosecutor"),
+        "defender": _t("role_title_defender"),
+        "judge": _t("role_title_judge"),
+        "clerk": _t("role_title_clerk"),
     }
     subtitles = {
-        "detective": "Sharp, observant, factual",
-        "prosecutor": "Persuasive, dramatic, logical",
-        "defender": "Skeptical, fair, cautious",
-        "judge": "Authoritative, measured, decisive",
-        "clerk": "Helpful, calm, actionable",
+        "detective": _t("role_subtitle_detective"),
+        "prosecutor": _t("role_subtitle_prosecutor"),
+        "defender": _t("role_subtitle_defender"),
+        "judge": _t("role_subtitle_judge"),
+        "clerk": _t("role_subtitle_clerk"),
     }
 
     if role == "detective":
         evidence = report_dict.get("detective_report", {}).get("evidence", [])
         if not evidence:
-            content = "<p><em>No red flags detected.</em></p>"
+            content = _t("role_no_red_flags")
         else:
             items = "".join(f"<li>{html.escape(e)}</li>" for e in evidence)
             content = f"<ul>{items}</ul>"
@@ -777,10 +1460,10 @@ def _render_role(role: str, report_dict: dict | None) -> str:
     else:  # clerk
         reply = html.escape(report_dict.get("safety_reply", ""))
         steps = report_dict.get("next_steps", [])
-        content = f"<p><strong>Safe Reply</strong></p><p>{reply}</p>"
+        content = f"<p><strong>{_t('role_safe_reply')}</strong></p><p>{reply}</p>"
         if steps:
             items = "".join(f"<li>{html.escape(s)}</li>" for s in steps)
-            content += f"<p><strong>Next Steps</strong></p><ol>{items}</ol>"
+            content += f"<p><strong>{_t('role_next_steps')}</strong></p><ol>{items}</ol>"
 
     svg = ROLE_SVGS.get(role, "")
     return f"""
@@ -788,8 +1471,8 @@ def _render_role(role: str, report_dict: dict | None) -> str:
       <div class="role-header">
         <div class="role-avatar">{svg}</div>
         <div class="role-meta">
-          <div class="role-title">{titles.get(role, role)}</div>
-          <div class="role-subtitle">{subtitles.get(role, "")}</div>
+          <div class="role-title">{html.escape(titles.get(role, role))}</div>
+          <div class="role-subtitle">{html.escape(subtitles.get(role, ""))}</div>
         </div>
       </div>
       <div class="role-body">{content}</div>
@@ -820,7 +1503,7 @@ def _shield_icon(verdict: str) -> str:
 
 def render_shield(report_dict: dict | None) -> str:
     if not report_dict:
-        return '<div class="shield-empty">Paste a message and tap <strong>Analyze</strong> to see your Shield verdict.</div>'
+        return f'<div class="shield-empty">{_t("shield_empty")}</div>'
     verdict = report_dict.get("shield_verdict", "VERIFY FIRST")
     action = report_dict.get("immediate_action", "Pause and verify before acting.")
     script = report_dict.get("trusted_contact_script", "")
@@ -829,17 +1512,15 @@ def render_shield(report_dict: dict | None) -> str:
     icon = _shield_icon(verdict)
     court_hint = ""
     if score >= 35:
-        court_hint = (
-            '<div style="margin-top:1rem;font-size:0.9rem;opacity:0.75;">'
-            'Switch to the <strong>Court</strong> tab for a full explanation of why this message is risky.</div>'
-        )
+        court_hint = f'<div class="shield-court-hint">{_t("shield_court_hint")}</div>'
     return f"""
     <div class="shield-card {cls}">
-      <div class="shield-verdict">{icon} {html.escape(verdict, quote=False)}</div>
-      <div class="shield-score">Risk score: {score}/100</div>
+      <div class="shield-icon">{icon}</div>
+      <div class="shield-verdict">{html.escape(verdict, quote=False)}</div>
+      <div class="shield-score">{score}/100</div>
       <div class="shield-action">{html.escape(action, quote=False)}</div>
       <div class="shield-script">
-        <div class="shield-script-label">What to tell a trusted contact</div>
+        <div class="shield-script-label">{html.escape(_t("shield_script_label"))}</div>
         {html.escape(script, quote=False)}
       </div>
       {court_hint}
@@ -852,18 +1533,18 @@ def render_shield(report_dict: dict | None) -> str:
 # ---------------------------------------------------------------------------
 def _call_trusted_script(score: int, tags: list[str]) -> str:
     if "asks_code" in tags:
-        return "I am on a call where someone is asking for my password or a code. I hung up. Can you help me change my account passwords just in case?"
+        return _t("call_script_code")
     if "asks_money" in tags and "claims_family_new_number" in tags:
-        return "Someone is pretending to be family and asking for money on the phone. I hung up. Can you help me reach [name] on the number we already have?"
+        return _t("call_script_family_money")
     if "asks_money" in tags:
-        return "I just hung up on a call asking me to send money or buy gift cards. Please remind me not to send anything until I verify through an official channel."
+        return _t("call_script_money")
     if "claims_family_new_number" in tags:
-        return "Someone called claiming to be family from a new number. I hung up. Can you help me reach them on the number we already know?"
+        return _t("call_script_family")
     if score >= 70:
-        return "I just hung up on a suspicious phone call. The person was pressuring me. Can you sit with me while I report it?"
+        return _t("call_script_high")
     if score >= 35:
-        return "I received a suspicious call and I am not sure it is real. I told them I would call back. Can you help me verify the number?"
-    return "I received a phone call that seemed okay, but I wanted to be cautious. No action needed right now."
+        return _t("call_script_medium")
+    return _t("call_script_low")
 
 
 def _clean_visual_risk_clues(raw_clues: list[str], extracted_text: str) -> list[str]:
@@ -916,7 +1597,7 @@ def analyze_call_checklist(
 
     # Override high-risk action with stronger wording
     if score >= 70:
-        action = "Hang up now and verify independently using a trusted number."
+        action = _t("call_action_hangup")
 
     cls = _shield_card_class(verdict)
     icon = _shield_icon(verdict)
@@ -926,16 +1607,17 @@ def analyze_call_checklist(
     if tags:
         tags_html = (
             "<div style='margin-top:0.8rem;font-size:0.85rem;opacity:0.8;'>"
-            "Warning signs: " + ", ".join(html.escape(t.replace("_", " "), quote=False) for t in tags)
+            f"{html.escape(_t('call_warning_signs'), quote=False)}: " + ", ".join(html.escape(t.replace("_", " "), quote=False) for t in tags)
             + "</div>"
         )
     return f"""
     <div class="shield-card {cls}">
-      <div class="shield-verdict">{icon} {html.escape(verdict, quote=False)}</div>
-      <div class="shield-score">Quick risk score: {score}/100</div>
+      <div class="shield-icon">{icon}</div>
+      <div class="shield-verdict">{html.escape(verdict, quote=False)}</div>
+      <div class="shield-score">{score}/100</div>
       <div class="shield-action">{html.escape(action, quote=False)}</div>
       <div class="shield-script">
-        <div class="shield-script-label">What to tell a trusted contact</div>
+        <div class="shield-script-label">{html.escape(_t("shield_script_label"))}</div>
         {html.escape(script, quote=False)}
       </div>
       {tags_html}
@@ -962,27 +1644,26 @@ def _companion_badge(report_dict: dict | None) -> str:
 
 def render_companion_whatsapp(report_dict: dict | None) -> str:
     if not report_dict:
-        return '<div class="shield-empty">Analyze a message first to preview the WhatsApp companion card.</div>'
+        return f'<div class="companion-empty">{html.escape(_t("companion_empty_whatsapp"))}</div>'
     text = report_dict.get("input_text", "")
     script = report_dict.get("trusted_contact_script", "")
     action = report_dict.get("immediate_action", "")
     score = report_dict.get("risk_score", 0)
     badge = _companion_badge(report_dict)
-    disclaimer = '<div style="font-size:0.7rem;color:#888;margin-top:0.6rem;text-align:center;">Prototype simulation — not a real extension</div>'
     return f"""
     <div class="companion-phone">
-      <div class="companion-header">&#128172; WhatsApp preview</div>
+      <div class="companion-header">&#128172; {html.escape(_t("companion_whatsapp"))}</div>
       <div class="companion-body">
         <div class="companion-bubble-in">{html.escape(_truncate(text), quote=False)}</div>
         <div class="companion-bubble-out">{html.escape(_truncate(script), quote=False)}</div>
         {badge}
-        <div style="margin-top:0.8rem;font-size:0.85rem;color:#aaa;">
-          <strong>Action:</strong> {html.escape(action, quote=False)}
+        <div class="companion-action">
+          <strong>{html.escape(_t("companion_action_label"))}</strong> {html.escape(action, quote=False)}
         </div>
-        <div style="margin-top:0.4rem;font-size:0.8rem;color:#888;">
-          Switch to the <strong>Court</strong> tab for the full explanation (score: {score})
+        <div class="companion-court-hint">
+          {_t("companion_switch_court").format(score=score)}
         </div>
-        {disclaimer}
+        <div class="companion-disclaimer">{html.escape(_t("companion_disclaimer"))}</div>
       </div>
     </div>
     """
@@ -990,35 +1671,34 @@ def render_companion_whatsapp(report_dict: dict | None) -> str:
 
 def render_companion_sms(report_dict: dict | None) -> str:
     if not report_dict:
-        return '<div class="shield-empty">Analyze a message first to preview the SMS companion card.</div>'
+        return f'<div class="companion-empty">{html.escape(_t("companion_empty_sms"))}</div>'
     text = report_dict.get("input_text", "")
     script = report_dict.get("trusted_contact_script", "")
     action = report_dict.get("immediate_action", "")
     score = report_dict.get("risk_score", 0)
     badge = _companion_badge(report_dict)
-    disclaimer = '<div style="font-size:0.7rem;color:#888;margin-top:0.6rem;text-align:center;">Prototype simulation — not a real extension</div>'
     return f"""
     <div class="companion-phone">
-      <div class="companion-header">&#9993; SMS preview</div>
+      <div class="companion-header">&#9993; {html.escape(_t("companion_sms"))}</div>
       <div class="companion-body">
         <div class="companion-sms">
-          <div class="companion-sms-label">Unknown sender</div>
+          <div class="companion-sms-label">{html.escape(_t("companion_unknown_sender"))}</div>
           {html.escape(_truncate(text), quote=False)}
-          <div class="companion-meta"><span>Now</span></div>
+          <div class="companion-meta"><span>{html.escape(_t("companion_now"))}</span></div>
         </div>
         <div class="companion-sms">
-          <div class="companion-sms-label">Your safe reply</div>
+          <div class="companion-sms-label">{html.escape(_t("companion_safe_reply"))}</div>
           {html.escape(_truncate(script), quote=False)}
-          <div class="companion-meta"><span>Draft</span></div>
+          <div class="companion-meta"><span>{html.escape(_t("companion_draft"))}</span></div>
         </div>
         {badge}
-        <div style="margin-top:0.8rem;font-size:0.85rem;color:#aaa;">
-          <strong>Action:</strong> {html.escape(action, quote=False)}
+        <div class="companion-action">
+          <strong>{html.escape(_t("companion_action_label"))}</strong> {html.escape(action, quote=False)}
         </div>
-        <div style="margin-top:0.4rem;font-size:0.8rem;color:#888;">
-          Switch to the <strong>Court</strong> tab for the full explanation (score: {score})
+        <div class="companion-court-hint">
+          {_t("companion_switch_court").format(score=score)}
         </div>
-        {disclaimer}
+        <div class="companion-disclaimer">{html.escape(_t("companion_disclaimer"))}</div>
       </div>
     </div>
     """
@@ -1026,35 +1706,34 @@ def render_companion_sms(report_dict: dict | None) -> str:
 
 def render_companion_marketplace(report_dict: dict | None) -> str:
     if not report_dict:
-        return '<div class="shield-empty">Analyze a message first to preview the Marketplace companion card.</div>'
+        return f'<div class="companion-empty">{html.escape(_t("companion_empty_marketplace"))}</div>'
     text = report_dict.get("input_text", "")
     script = report_dict.get("trusted_contact_script", "")
     action = report_dict.get("immediate_action", "")
     score = report_dict.get("risk_score", 0)
     badge = _companion_badge(report_dict)
-    disclaimer = '<div style="font-size:0.7rem;color:#888;margin-top:0.6rem;text-align:center;">Prototype simulation — not a real extension</div>'
     return f"""
     <div class="companion-phone">
-      <div class="companion-header">&#128235; Marketplace preview</div>
+      <div class="companion-header">&#128235; {html.escape(_t("companion_marketplace"))}</div>
       <div class="companion-body">
         <div class="companion-sms">
-          <div class="companion-sms-label">Buyer message</div>
+          <div class="companion-sms-label">{html.escape(_t("companion_buyer_message"))}</div>
           {html.escape(_truncate(text), quote=False)}
-          <div class="companion-meta"><span>Platform: Marketplace</span></div>
+          <div class="companion-meta"><span>{html.escape(_t("companion_platform"))}</span></div>
         </div>
         <div class="companion-sms">
-          <div class="companion-sms-label">Recommended response</div>
+          <div class="companion-sms-label">{html.escape(_t("companion_recommended_response"))}</div>
           {html.escape(_truncate(script), quote=False)}
-          <div class="companion-meta"><span>Draft reply</span></div>
+          <div class="companion-meta"><span>{html.escape(_t("companion_draft"))}</span></div>
         </div>
         {badge}
-        <div style="margin-top:0.8rem;font-size:0.85rem;color:#aaa;">
-          <strong>Action:</strong> {html.escape(action, quote=False)}
+        <div class="companion-action">
+          <strong>{html.escape(_t("companion_action_label"))}</strong> {html.escape(action, quote=False)}
         </div>
-        <div style="margin-top:0.4rem;font-size:0.8rem;color:#888;">
-          Switch to the <strong>Court</strong> tab for the full explanation (score: {score})
+        <div class="companion-court-hint">
+          {_t("companion_switch_court").format(score=score)}
         </div>
-        {disclaimer}
+        <div class="companion-disclaimer">{html.escape(_t("companion_disclaimer"))}</div>
       </div>
     </div>
     """
@@ -1079,38 +1758,38 @@ def render_vision_witness(report_dict: dict | None) -> str:
     error = report_dict.get("vision_error") or ""
 
     status_label = {
-        "inactive": "Inactive — paste text for analysis",
-        "loaded": "Loaded — vision backend ready",
-        "analyzed": "Analyzed",
-        "failed": "Failed — verify independently",
-        "not_available": "Not Available — install transformers + torch",
+        "inactive": _t("vision_status_inactive"),
+        "loaded": _t("vision_status_loaded"),
+        "analyzed": _t("vision_status_analyzed"),
+        "failed": _t("vision_status_failed"),
+        "not_available": _t("vision_status_not_available"),
     }.get(status, status)
 
     body_parts = []
     if screenshot_type:
-        body_parts.append(f'<p><strong>Type:</strong> {html.escape(screenshot_type.capitalize(), quote=False)}</p>')
+        body_parts.append(f'<p><strong>{html.escape(_t("vision_type_label"))}</strong> {html.escape(screenshot_type.capitalize(), quote=False)}</p>')
     if summary:
         body_parts.append(f"<p>{html.escape(summary, quote=False)}</p>")
     if extracted:
-        body_parts.append(f"<p><strong>Extracted text:</strong> {html.escape(extracted, quote=False)}</p>")
+        body_parts.append(f'<p><strong>{html.escape(_t("vision_extracted_label"))}</strong> {html.escape(extracted, quote=False)}</p>')
     if clues:
         items = "".join(f"<li>{html.escape(c, quote=False)}</li>" for c in clues)
-        body_parts.append(f'<p><strong>Visual clues:</strong></p><ul>{items}</ul>')
+        body_parts.append(f'<p><strong>{html.escape(_t("vision_clues_label"))}</strong></p><ul>{items}</ul>')
     if error and status in ("failed", "not_available"):
-        body_parts.append(f'<p style="opacity:0.7;font-size:0.85rem;">Error: {html.escape(error, quote=False)}</p>')
+        body_parts.append(f'<p style="opacity:0.7;font-size:0.85rem;"><strong>{html.escape(_t("vision_error_label"))}</strong> {html.escape(error, quote=False)}</p>')
 
-    body_html = "".join(body_parts) if body_parts else "<p>Screenshot received. Vision analysis is not active yet. Paste the message text for full analysis.</p>"
+    body_html = "".join(body_parts) if body_parts else _t("vision_no_analysis")
 
     confidence_badge = ""
     if confidence > 0:
-        confidence_badge = f'<span style="margin-left:0.5rem;font-size:0.7rem;opacity:0.7;">Confidence: {confidence:.0%}</span>'
+        confidence_badge = f'<span style="margin-left:0.5rem;font-size:0.7rem;opacity:0.7;">{html.escape(_t("vision_confidence"))}: {confidence:.0%}</span>'
 
     return f"""
     <div class="vision-card">
-      <div class="vision-header">&#128248; Vision Witness</div>
+      <div class="vision-header">&#128248; {html.escape(_t("vision_title"))}</div>
       <span class="vision-status {status}">{html.escape(status_label, quote=False)}</span>{confidence_badge}
       <div class="vision-body">{body_html}</div>
-      <div class="vision-privacy">Model: {html.escape(model, quote=False)} · Screenshot processed only for this session.</div>
+      <div class="vision-privacy">{_t("vision_privacy").format(model=html.escape(model, quote=False))}</div>
     </div>
     """
 
@@ -1123,7 +1802,7 @@ def analyze_message(message: str, image_path: str | None = None) -> tuple[str, d
     has_text = message and message.strip()
 
     if not has_text and not has_image:
-        empty_gauge = _render_gauge(0, "WAITING", "Submit evidence to begin the trial.")
+        empty_gauge = _render_gauge(0, _t("gauge_waiting"), _t("gauge_waiting_rationale"))
         empty_shield = render_shield(None)
         empty_vision = render_vision_witness(None)
         empty_companion = (
@@ -1244,21 +1923,22 @@ def _show_detective(report: dict | None) -> tuple[str, str]:
 
 
 def _render_backend_status() -> str:
-    """Render a small backend status indicator for the header."""
+    """Render backend status pills for the utility bar."""
     import os
+    import sys
     text_backend = getattr(backend, "model_backend", "heuristic_v1")
     vision = get_vision_backend()
     vision_name = vision.backend_name
     vision_dot = "off" if vision_name == "none" else ""
     hf_home = os.getenv("HF_HOME", "~/.cache/huggingface")
-    return f"""
-    <div style="text-align:center;margin-bottom:1rem;">
-      <span class="backend-status">Text: {text_backend}</span>
-      <span class="backend-status">Vision: {vision_name} <span class="dot {vision_dot}"></span></span>
-      <span class="backend-status">Model: {get_vision_model_id()}</span>
-      <span class="backend-status">Cache: {hf_home}</span>
-    </div>
-    """
+    py_ver = f"{sys.version_info.major}.{sys.version_info.minor}"
+    return (
+        f'<span class="backend-status">{_t("backend_text")}: {text_backend}</span>'
+        f'<span class="backend-status">{_t("backend_vision")}: {vision_name} <span class="dot {vision_dot}"></span></span>'
+        f'<span class="backend-status">{_t("backend_model")}: {get_vision_model_id()}</span>'
+        f'<span class="backend-status">{_t("backend_cache")}: {hf_home}</span>'
+        f'<span class="backend-status">Py: {py_ver}</span>'
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1266,34 +1946,69 @@ def _render_backend_status() -> str:
 # ---------------------------------------------------------------------------
 def build_ui() -> gr.Blocks:
     with gr.Blocks(title="Scam Court AI") as demo:
+        # ── Hero ──
         gr.HTML(
-            """
+            f"""
             <div id="court-header">
                 <h1>Scam Court AI</h1>
-                <p>3-Second Scam Shield + AI Courtroom Explanation for the people you protect.</p>
+                <p>{html.escape(_t("app_subtitle"))}</p>
             </div>
+            <script>
+            (function() {{
+              function applyTheme(t) {{
+                document.body.classList.toggle("light", t === "light");
+                try {{ localStorage.setItem("scam-court-theme", t); }} catch(e) {{}}
+              }}
+              function applyLang(l) {{
+                try {{ localStorage.setItem("scam-court-lang", l); }} catch(e) {{}}
+                if (l !== "{_current_lang}") {{
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("__lang", l);
+                  window.location.replace(url.toString());
+                }}
+              }}
+              var storedTheme = null;
+              var storedLang = null;
+              try {{
+                storedTheme = localStorage.getItem("scam-court-theme");
+                storedLang = localStorage.getItem("scam-court-lang");
+              }} catch(e) {{}}
+              var initialTheme = storedTheme || "{_current_theme}";
+              var initialLang = storedLang || "{_current_lang}";
+              applyTheme(initialTheme);
+              window._scamCourtSetTheme = applyTheme;
+              window._scamCourtSetLang = applyLang;
+              var selT = document.getElementById("sc-theme");
+              var selL = document.getElementById("sc-lang");
+              if (selT) selT.value = initialTheme;
+              if (selL) selL.value = initialLang;
+              if (initialLang !== "{_current_lang}" && !window.location.search.includes("__lang=")) {{
+                applyLang(initialLang);
+              }}
+            }})();
+            </script>
             """
         )
-        gr.HTML(_render_backend_status())
 
         report_state = gr.State(None)
+        lang_state = gr.State(_current_lang)
+        theme_state = gr.State(_current_theme)
 
         with gr.Tabs(elem_classes=["mode-tabs"]):
             # ── Shield Mode ──
-            with gr.Tab("Shield"):
-                gr.Markdown('<em style="opacity:0.65;font-size:0.85rem;">For suspicious messages or call summaries. Get a 3-second safety verdict.</em>')
+            with gr.Tab(_t("tab_shield")):
                 with gr.Row():
                     with gr.Column(scale=1, elem_classes=["input-panel"]):
-                        gr.Markdown('<div class="section-label">Paste a suspicious message</div>')
+                        gr.Markdown(f'<div class="section-label">{html.escape(_t("section_submit_evidence"))}</div>')
                         shield_input = gr.Textbox(
                             label="",
-                            placeholder="WhatsApp, SMS, email, or screenshot text…",
+                            placeholder=_t("input_placeholder"),
                             lines=10,
                             max_lines=18,
                             show_label=False,
                         )
                         gr.Markdown(
-                            '<div class="section-label" style="margin-top:1rem;">Or upload a screenshot</div>'
+                            f'<div class="section-label" style="margin-top:1.2rem;">{html.escape(_t("upload_screenshot"))}</div>'
                         )
                         shield_image = gr.Image(
                             label="",
@@ -1303,13 +2018,13 @@ def build_ui() -> gr.Blocks:
                             show_label=False,
                         )
                         gr.Markdown(
-                            '<em style="opacity:0.55;font-size:0.75rem;">PNG, JPG, JPEG · WhatsApp, SMS, email, marketplace, or fake invoice screenshot</em>'
+                            f'<div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:0.4rem;">{html.escape(_t("upload_hint"))}</div>'
                         )
                         with gr.Row():
-                            shield_submit = gr.Button("Analyze", variant="primary")
-                            shield_random = gr.Button("Random Example")
-                            shield_clear = gr.Button("Clear")
-                        gr.Markdown('<div class="section-label" style="margin-top:1.2rem;">Quick Load</div>')
+                            shield_submit = gr.Button(_t("btn_analyze"), variant="primary")
+                            shield_random = gr.Button(_t("btn_random_example"), elem_classes=["secondary"])
+                            shield_clear = gr.Button(_t("btn_clear"), elem_classes=["secondary"])
+                        gr.Markdown(f'<div class="section-label" style="margin-top:1.5rem;">{html.escape(_t("quick_examples"))}</div>')
                         shield_example_btns = []
                         for label, text in EXAMPLE_BUTTONS:
                             btn = gr.Button(label, elem_classes=["example-btn"], size="sm")
@@ -1320,21 +2035,19 @@ def build_ui() -> gr.Blocks:
                         shield_vision = gr.HTML()
 
             # ── Court Mode ──
-            with gr.Tab("Court"):
-                gr.Markdown('<em style="opacity:0.65;font-size:0.85rem;">Full AI courtroom explanation. See Detective, Prosecutor, Defender, Judge, and Clerk.</em>')
+            with gr.Tab(_t("tab_court")):
                 with gr.Row():
-                    # Left Column
                     with gr.Column(scale=1, elem_classes=["input-panel"]):
-                        gr.Markdown('<div class="section-label">Submit Evidence</div>')
+                        gr.Markdown(f'<div class="section-label">{html.escape(_t("court_input_label"))}</div>')
                         court_input = gr.Textbox(
-                            label="Paste the suspicious message",
-                            placeholder="Paste a WhatsApp message, SMS, email, or screenshot text here…",
+                            label="",
+                            placeholder=_t("input_placeholder"),
                             lines=10,
                             max_lines=18,
                             show_label=False,
                         )
                         gr.Markdown(
-                            '<div class="section-label" style="margin-top:1rem;">Or upload a screenshot</div>'
+                            f'<div class="section-label" style="margin-top:1.2rem;">{html.escape(_t("upload_screenshot"))}</div>'
                         )
                         court_image = gr.Image(
                             label="",
@@ -1344,73 +2057,71 @@ def build_ui() -> gr.Blocks:
                             show_label=False,
                         )
                         gr.Markdown(
-                            '<em style="opacity:0.55;font-size:0.75rem;">PNG, JPG, JPEG · WhatsApp, SMS, email, marketplace, or fake invoice screenshot</em>'
+                            f'<div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:0.4rem;">{html.escape(_t("upload_hint"))}</div>'
                         )
                         with gr.Row():
-                            court_submit = gr.Button("Bring to Court", variant="primary")
-                            court_random = gr.Button("Random Example")
-                            court_clear = gr.Button("Clear")
+                            court_submit = gr.Button(_t("btn_analyze_court"), variant="primary")
+                            court_random = gr.Button(_t("btn_random_example"), elem_classes=["secondary"])
+                            court_clear = gr.Button(_t("btn_clear"), elem_classes=["secondary"])
 
-                        gr.Markdown('<div class="section-label" style="margin-top:1.2rem;">Quick Load</div>')
+                        gr.Markdown(f'<div class="section-label" style="margin-top:1.5rem;">{html.escape(_t("quick_examples"))}</div>')
                         court_example_btns = []
                         for label, text in EXAMPLE_BUTTONS:
                             btn = gr.Button(label, elem_classes=["example-btn"], size="sm")
                             court_example_btns.append((btn, text))
 
-                    # Right Column
                     with gr.Column(scale=2):
                         risk_gauge = gr.HTML()
                         court_vision = gr.HTML()
 
-                        gr.Markdown('<div class="section-label">Court Members</div>')
+                        gr.Markdown(f'<div class="section-label">{html.escape(_t("court_members"))}</div>')
                         with gr.Row(elem_classes=["role-selector"]):
-                            btn_detective = gr.Button("Detective", elem_classes=["role-btn", "role-btn-detective"])
-                            btn_prosecutor = gr.Button("Prosecutor", elem_classes=["role-btn", "role-btn-prosecutor"])
-                            btn_defender = gr.Button("Defender", elem_classes=["role-btn", "role-btn-defender"])
-                            btn_judge = gr.Button("Judge", elem_classes=["role-btn", "role-btn-judge"])
-                            btn_clerk = gr.Button("Clerk", elem_classes=["role-btn", "role-btn-clerk"])
+                            btn_detective = gr.Button(_t("role_detective"), elem_classes=["role-btn", "role-btn-detective"])
+                            btn_prosecutor = gr.Button(_t("role_prosecutor"), elem_classes=["role-btn", "role-btn-prosecutor"])
+                            btn_defender = gr.Button(_t("role_defender"), elem_classes=["role-btn", "role-btn-defender"])
+                            btn_judge = gr.Button(_t("role_judge"), elem_classes=["role-btn", "role-btn-judge"])
+                            btn_clerk = gr.Button(_t("role_clerk"), elem_classes=["role-btn", "role-btn-clerk"])
 
                         active_indicator = gr.HTML(_render_indicator(None))
                         role_display = gr.HTML()
 
-                        with gr.Accordion("Export Report JSON", open=False):
-                            json_out = gr.Code(language="json", label="Report JSON")
+                        with gr.Accordion(_t("export_accordion"), open=False):
+                            json_out = gr.Code(language="json", label=_t("export_json"))
 
             # ── Suspicious Call Quick Check ──
-            with gr.Tab("Suspicious Call"):
-                gr.Markdown('<em style="opacity:0.65;font-size:0.85rem;">For active phone calls. Check what is happening right now.</em>')
+            with gr.Tab(_t("tab_call")):
                 with gr.Row():
                     with gr.Column(scale=1, elem_classes=["input-panel", "call-check"]):
-                        gr.Markdown('<div class="section-label">Quick phone-call check</div>')
-                        gr.Markdown("Check every box that applies to the call you or a loved one is on.")
-                        chk_money = gr.Checkbox(label="They are asking for money, gift cards, or crypto")
-                        chk_code = gr.Checkbox(label="They are asking for a code, password, or PIN")
-                        chk_family = gr.Checkbox(label="They claim to be family using a new number")
-                        chk_urgency = gr.Checkbox(label="They create urgency, fear, or a deadline")
-                        chk_secrecy = gr.Checkbox(label="They ask you to keep the call secret")
-                        call_submit = gr.Button("Check the Call", variant="primary")
-                        call_clear = gr.Button("Reset")
+                        gr.Markdown(f'<div class="section-label">{html.escape(_t("call_title"))}</div>')
+                        gr.Markdown(f'<div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">{html.escape(_t("call_hint"))}</div>')
+                        chk_money = gr.Checkbox(label=_t("call_money"), elem_classes=["call-factor"], container=False)
+                        chk_code = gr.Checkbox(label=_t("call_code"), elem_classes=["call-factor"], container=False)
+                        chk_family = gr.Checkbox(label=_t("call_family"), elem_classes=["call-factor"], container=False)
+                        chk_urgency = gr.Checkbox(label=_t("call_urgency"), elem_classes=["call-factor"], container=False)
+                        chk_secrecy = gr.Checkbox(label=_t("call_secrecy"), elem_classes=["call-factor"], container=False)
+                        with gr.Row():
+                            call_submit = gr.Button(_t("btn_check_call"), variant="primary")
+                            call_clear = gr.Button(_t("btn_reset"), elem_classes=["secondary"])
                     with gr.Column(scale=2):
                         call_output = gr.HTML()
 
             # ── Companion Preview ──
-            with gr.Tab("Companion Preview"):
-                gr.Markdown('<em style="opacity:0.65;font-size:0.85rem;">Simulation of future WhatsApp/SMS/Marketplace integration.</em>')
+            with gr.Tab(_t("tab_companion")):
                 with gr.Row():
                     with gr.Column(scale=1, elem_classes=["input-panel"]):
-                        gr.Markdown('<div class="section-label">Paste a message to preview</div>')
+                        gr.Markdown(f'<div class="section-label">{html.escape(_t("companion_title"))}</div>')
                         companion_input = gr.Textbox(
                             label="",
-                            placeholder="WhatsApp, SMS, email, or marketplace message…",
+                            placeholder=_t("input_placeholder"),
                             lines=10,
                             max_lines=18,
                             show_label=False,
                         )
                         with gr.Row():
-                            companion_submit = gr.Button("Analyze Selected Message", variant="primary")
-                            companion_random = gr.Button("Random Example")
-                            companion_clear = gr.Button("Clear")
-                        gr.Markdown('<div class="section-label" style="margin-top:1.2rem;">Quick Load</div>')
+                            companion_submit = gr.Button(_t("companion_btn_analyze"), variant="primary")
+                            companion_random = gr.Button(_t("btn_random_example"), elem_classes=["secondary"])
+                            companion_clear = gr.Button(_t("btn_clear"), elem_classes=["secondary"])
+                        gr.Markdown(f'<div class="section-label" style="margin-top:1.5rem;">{html.escape(_t("quick_examples"))}</div>')
                         companion_example_btns = []
                         for label, text in EXAMPLE_BUTTONS:
                             btn = gr.Button(label, elem_classes=["example-btn"], size="sm")
@@ -1419,15 +2130,14 @@ def build_ui() -> gr.Blocks:
                     with gr.Column(scale=2):
                         companion_vision = gr.HTML()
                         with gr.Tabs():
-                            with gr.Tab("WhatsApp"):
+                            with gr.Tab(_t("companion_whatsapp_tab")):
                                 companion_whatsapp = gr.HTML()
-                            with gr.Tab("SMS"):
+                            with gr.Tab(_t("companion_sms_tab")):
                                 companion_sms = gr.HTML()
-                            with gr.Tab("Marketplace"):
+                            with gr.Tab(_t("companion_marketplace_tab")):
                                 companion_marketplace = gr.HTML()
 
         # ── Shared events ──
-        # Analyze from Shield tab
         shield_submit.click(
             fn=analyze_message,
             inputs=[shield_input, shield_image],
@@ -1438,7 +2148,6 @@ def build_ui() -> gr.Blocks:
             outputs=[active_indicator, role_display],
         )
 
-        # Analyze from Court tab
         court_submit.click(
             fn=analyze_message,
             inputs=[court_input, court_image],
@@ -1449,7 +2158,6 @@ def build_ui() -> gr.Blocks:
             outputs=[active_indicator, role_display],
         )
 
-        # Analyze from Companion tab
         companion_submit.click(
             fn=analyze_message,
             inputs=[companion_input, gr.State(None)],
@@ -1460,14 +2168,12 @@ def build_ui() -> gr.Blocks:
             outputs=[active_indicator, role_display],
         )
 
-        # Role switching
         btn_detective.click(fn=_make_switch("detective"), inputs=report_state, outputs=[active_indicator, role_display])
         btn_prosecutor.click(fn=_make_switch("prosecutor"), inputs=report_state, outputs=[active_indicator, role_display])
         btn_defender.click(fn=_make_switch("defender"), inputs=report_state, outputs=[active_indicator, role_display])
         btn_judge.click(fn=_make_switch("judge"), inputs=report_state, outputs=[active_indicator, role_display])
         btn_clerk.click(fn=_make_switch("clerk"), inputs=report_state, outputs=[active_indicator, role_display])
 
-        # Suspicious Call events
         call_submit.click(
             fn=analyze_call_checklist,
             inputs=[chk_money, chk_code, chk_family, chk_urgency, chk_secrecy],
@@ -1478,7 +2184,6 @@ def build_ui() -> gr.Blocks:
             outputs=[chk_money, chk_code, chk_family, chk_urgency, chk_secrecy, call_output],
         )
 
-        # Examples
         shield_random.click(fn=load_random_example, outputs=shield_input)
         court_random.click(fn=load_random_example, outputs=court_input)
         companion_random.click(fn=load_random_example, outputs=companion_input)
@@ -1489,18 +2194,17 @@ def build_ui() -> gr.Blocks:
         for btn, text in companion_example_btns:
             btn.click(fn=lambda t=text: t, outputs=companion_input)
 
-        # Clear buttons — reset all shared state
         def _clear_all():
             return (
-                None, None, None,  # images
-                "", "", "",  # texts
-                _render_gauge(0, "WAITING", "Submit evidence to begin the trial."),
+                None, None, None,
+                "", "", "",
+                _render_gauge(0, _t("gauge_waiting"), _t("gauge_waiting_rationale")),
                 None,
                 "",
                 _render_indicator(None),
                 "",
                 render_shield(None),
-                "", "", "",  # vision outputs
+                "", "", "",
                 render_companion_whatsapp(None),
                 render_companion_sms(None),
                 render_companion_marketplace(None),
@@ -1540,10 +2244,39 @@ def build_ui() -> gr.Blocks:
             ],
         )
 
-        gr.Markdown(
-            """
-            <div style="text-align:center;opacity:0.4;font-size:0.72rem;margin-top:2.2rem;letter-spacing:0.6px;">
-            Scam Court AI · Hugging Face Build Small Hackathon · CPU-first · Model-ready
+        # ── Premium utility bar ──
+        gr.HTML(
+            f"""
+            <div class="utility-bar">
+              <div class="utility-section">
+                <div class="utility-brand">Scam Court AI</div>
+              </div>
+              <div class="utility-section">
+                <span class="utility-section-label">System</span>
+                <div class="utility-meta">
+                  {_render_backend_status()}
+                </div>
+              </div>
+              <div class="utility-section">
+                <span class="utility-section-label">Settings</span>
+                <div class="utility-controls">
+                  <div class="utility-pill">
+                    <label for="sc-lang" style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;margin-right:0.3rem;opacity:0.6;">{html.escape(_t("lang_label"))}</label>
+                    <select id="sc-lang" onchange="window._scamCourtSetLang(this.value)">
+                      <option value="en" {"selected" if _current_lang == "en" else ""}>English</option>
+                      <option value="es" {"selected" if _current_lang == "es" else ""}>Español</option>
+                    </select>
+                  </div>
+                  <div class="utility-pill">
+                    <label for="sc-theme" style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;margin-right:0.3rem;opacity:0.6;">{html.escape(_t("theme_label"))}</label>
+                    <select id="sc-theme" onchange="window._scamCourtSetTheme(this.value)">
+                      <option value="dark" {"selected" if _current_theme == "dark" else ""}>{html.escape(_t("theme_dark"))}</option>
+                      <option value="light" {"selected" if _current_theme == "light" else ""}>{html.escape(_t("theme_light"))}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              </div>
             </div>
             """
         )
@@ -1563,5 +2296,5 @@ if __name__ == "__main__":
         server_port=port,
         show_error=True,
         favicon_path=None,
-        css=COURT_CSS,
+        css=_build_css(_role_subtitles_for_theme()),
     )

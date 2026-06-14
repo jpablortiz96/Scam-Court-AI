@@ -1185,7 +1185,8 @@ def build_ui() -> gr.Blocks:
 
         with gr.Column(elem_classes=["utility-dock"]):
             with gr.Row(equal_height=True, elem_classes=["utility-topbar"]):
-                system_brand = gr.HTML(render_system_brand(lang), scale=3)
+                with gr.Column(scale=3, min_width=320):
+                    system_brand = gr.HTML(render_system_brand(lang))
                 language_dropdown = gr.Dropdown(
                     choices=[("English", "en"), ("Español", "es")],
                     value=lang,

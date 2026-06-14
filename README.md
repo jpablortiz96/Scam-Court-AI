@@ -1,6 +1,6 @@
 ---
 title: Scam Court AI
-emoji: ??
+emoji: 🛡️
 colorFrom: indigo
 colorTo: purple
 sdk: gradio

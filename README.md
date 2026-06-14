@@ -47,7 +47,7 @@ python app.py
 
 > **Low C: drive space?** Move all caches (pip, Hugging Face, PyTorch) to **D:** — see [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md).
 
-Then open http://localhost:7861
+Then open http://localhost:7860
 
 ---
 
@@ -171,7 +171,7 @@ python app.py
 
 **Privacy note:** Uploaded screenshots are processed only for the current session. No images are stored or transmitted.
 
-**Local hardware too slow?** MiniCPM-V-4 runs best on a GPU (8 GB+ VRAM). For local CPU-only machines, first-run analysis may take 1–2 minutes. For fastest results, deploy to a Hugging Face Space with GPU or ZeroGPU.
+**Local hardware too slow?** MiniCPM-V-4 runs best on a GPU. The Hugging Face deployment supports ZeroGPU through the decorated shared analysis handler. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 **Low C: drive space?** See [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md) to move pip, Hugging Face, and PyTorch caches to **D:**.
 

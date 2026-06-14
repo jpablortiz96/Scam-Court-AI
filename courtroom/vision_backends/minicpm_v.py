@@ -7,13 +7,20 @@ Falls back safely if dependencies are missing or the model fails.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from typing import Any
 
 from .base import BaseVisionBackend
+from ..zero_gpu import (
+    SPACES_IMPORT_SUCCEEDED,
+    ZERO_GPU_DECORATOR_ACTIVE,
+    ZERO_GPU_RUNTIME_ACTIVE,
+)
 
 _DEFAULT_MODEL = "openbmb/MiniCPM-V-4"
+_LOGGER = logging.getLogger(__name__)
 
 _VISION_PROMPT = """You are a forensic screenshot examiner. Inspect this image carefully.
 
@@ -94,6 +101,23 @@ def _get_versions() -> dict[str, str]:
     return versions
 
 
+def _log_vision_failure(exc: BaseException, model_id: str) -> None:
+    """Log deployment diagnostics without exposing message or image contents."""
+    _LOGGER.error(
+        "MiniCPM-V failure: exception_type=%s exception_message=%s "
+        "model_id=%s device=%s spaces_import_succeeded=%s "
+        "zero_gpu_decorator_active=%s zero_gpu_runtime_active=%s",
+        type(exc).__name__,
+        str(exc),
+        model_id,
+        _get_device(),
+        SPACES_IMPORT_SUCCEEDED,
+        ZERO_GPU_DECORATOR_ACTIVE,
+        ZERO_GPU_RUNTIME_ACTIVE,
+        exc_info=(type(exc), exc, exc.__traceback__) if exc.__traceback__ else False,
+    )
+
+
 class MiniCPMVBackend(BaseVisionBackend):
     """Real MiniCPM-V vision backend.
 
@@ -143,6 +167,7 @@ class MiniCPMVBackend(BaseVisionBackend):
                 f"Missing dependencies: {', '.join(missing)}. "
                 f"Install with: pip install {' '.join(missing)}"
             )
+            _log_vision_failure(RuntimeError(self._load_error), self._model_id)
             return False
 
         try:
@@ -166,6 +191,7 @@ class MiniCPMVBackend(BaseVisionBackend):
         except AttributeError as exc:
             # Known Transformers compatibility issue with trust_remote_code models
             self._loaded = True
+            _log_vision_failure(exc, self._model_id)
             err_msg = str(exc)
             if "all_tied_weights_keys" in err_msg:
                 versions = _get_versions()
@@ -179,6 +205,7 @@ class MiniCPMVBackend(BaseVisionBackend):
             return False
         except Exception as exc:
             self._loaded = True
+            _log_vision_failure(exc, self._model_id)
             self._load_error = str(exc)
             return False
 
@@ -299,6 +326,7 @@ class MiniCPMVBackend(BaseVisionBackend):
             }
 
         except Exception as exc:
+            _log_vision_failure(exc, self._model_id)
             versions = _get_versions()
             err_msg = str(exc)
             if "all_tied_weights_keys" in err_msg:

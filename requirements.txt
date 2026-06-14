@@ -3,6 +3,8 @@
 
 # UI
 gradio>=4.0.0
+spaces>=0.50.0,<1
+huggingface-hub>=0.34.0,<1
 
 # Configuration
 python-dotenv>=1.0.0

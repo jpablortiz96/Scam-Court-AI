@@ -24,7 +24,7 @@
 2. User right-clicks → "Check with Scam Court AI"
 
 3. Extension sends selected text to local Scam Court AI backend
-   (default: http://localhost:7861)
+   (default: http://localhost:7860)
    Body: { text: selected, source: "chrome_extension" }
 
 4. A floating panel appears near the selection showing, in order:
@@ -79,7 +79,7 @@ chrome.contextMenus.create({
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "analyze-selection") return;
-  const endpoint = await getUserEndpoint(); // default: localhost:7861
+  const endpoint = await getUserEndpoint(); // default: localhost:7860
   const report = await fetch(`${endpoint}/api/analyze`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},

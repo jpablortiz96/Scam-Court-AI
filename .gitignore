@@ -67,6 +67,7 @@ docs/private/
 outputs/
 tmp/
 modal/.modal/
+.scam-court-lang
 
 # Logs
 *.log

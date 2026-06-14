@@ -21,6 +21,12 @@ import gradio as gr
 from courtroom import get_backend, get_vision_backend
 from courtroom.config import get_vision_model_id
 from courtroom.engine import CourtroomEngine
+from courtroom.zero_gpu import (
+    SPACES_IMPORT_SUCCEEDED,
+    ZERO_GPU_DECORATOR_ACTIVE,
+    ZERO_GPU_RUNTIME_ACTIVE,
+    gpu_function,
+)
 
 # ---------------------------------------------------------------------------
 # Internationalization + theme state
@@ -1797,6 +1803,7 @@ def render_vision_witness(report_dict: dict | None) -> str:
 # ---------------------------------------------------------------------------
 # Analysis function
 # ---------------------------------------------------------------------------
+@gpu_function(duration=180)
 def analyze_message(message: str, image_path: str | None = None) -> tuple[str, dict, str, str, str, str, str, str]:
     has_image = image_path is not None and image_path != ""
     has_text = message and message.strip()
@@ -2289,7 +2296,18 @@ def build_ui() -> gr.Blocks:
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     import os
-    port = int(os.getenv("GRADIO_SERVER_PORT", os.getenv("PORT", "7861")))
+    port = int(os.getenv("GRADIO_SERVER_PORT", os.getenv("PORT", "7860")))
+    print(
+        "[startup] "
+        f"text_backend={getattr(backend, 'model_backend', 'heuristic_v1')} "
+        f"vision_backend={get_vision_backend().backend_name} "
+        f"vision_model={get_vision_model_id()} "
+        f"spaces_import_succeeded={SPACES_IMPORT_SUCCEEDED} "
+        f"zero_gpu_decorator_active={ZERO_GPU_DECORATOR_ACTIVE} "
+        f"zero_gpu_runtime_active={ZERO_GPU_RUNTIME_ACTIVE} "
+        f"port={port}",
+        flush=True,
+    )
     demo = build_ui()
     demo.launch(
         server_name="0.0.0.0",

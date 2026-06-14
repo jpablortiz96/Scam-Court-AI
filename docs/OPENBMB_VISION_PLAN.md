@@ -87,29 +87,15 @@ python app.py
 
 The model downloads on first use (~8–16 GB depending on variant) and caches in `~/.cache/huggingface/`.
 
-### With MiniCPM-V on Hugging Face ZeroGPU / GPU Space
+### With MiniCPM-V on Hugging Face ZeroGPU
 
-For Spaces with GPU or ZeroGPU, add a GPU decorator and let the Space handle device allocation:
+The shared Gradio inference handler is registered through the real
+`@spaces.GPU` decorator when the `spaces` package is available. Shield and
+Court screenshot requests both use this handler. Local execution uses a no-op
+fallback when `spaces` is unavailable.
 
-```python
-# In app.py or a separate module
-import os
-
-def load_vision_model():
-    """GPU-aware model loader for Spaces."""
-    from transformers import AutoModel, AutoTokenizer
-    model_id = os.getenv("SCAM_COURT_VISION_MODEL", "openbmb/MiniCPM-V-4")
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-    model = AutoModel.from_pretrained(model_id, trust_remote_code=True)
-    return model, tokenizer
-
-# If running on Spaces with @spaces.GPU:
-# from spaces import GPU
-# @GPU
-# def analyze_with_gpu(image_path):
-#     model, tokenizer = load_vision_model()
-#     ...
-```
+MiniCPM-V remains lazy-loaded inside the decorated request path and is not
+initialized during app import or startup.
 
 Recommended Space settings:
 - **Hardware:** GPU (NVIDIA T4 or better)

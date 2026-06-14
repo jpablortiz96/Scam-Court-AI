@@ -167,7 +167,7 @@ json_payload = report.to_json()
 // content.js — user highlights text and right-clicks
 const selected = window.getSelection().toString();
 
-fetch('http://localhost:7861/api/analyze', {
+fetch('http://localhost:7860/api/analyze', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({text: selected, source: 'chrome_extension'})

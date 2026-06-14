@@ -220,7 +220,7 @@ Your `.gitignore` already protects the repo from committing:
   ```
 - If empty, re-run Step 2 (temporary) or Step 3 (permanent).
 
-### "Gradio says port 7861 is in use"
+### "Gradio says port 7860 is in use"
 
 - Kill the old process or use a different port:
   ```powershell

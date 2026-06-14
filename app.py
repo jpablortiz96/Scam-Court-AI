@@ -1952,7 +1952,10 @@ def _render_backend_status() -> str:
 # Gradio UI
 # ---------------------------------------------------------------------------
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="Scam Court AI") as demo:
+    with gr.Blocks(
+        title="Scam Court AI",
+        css=_build_css(_role_subtitles_for_theme()),
+    ) as demo:
         # ── Hero ──
         gr.HTML(
             f"""
@@ -2296,7 +2299,7 @@ def build_ui() -> gr.Blocks:
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     import os
-    port = int(os.getenv("GRADIO_SERVER_PORT", os.getenv("PORT", "7860")))
+    port = int(os.getenv("PORT", "7860"))
     print(
         "[startup] "
         f"text_backend={getattr(backend, 'model_backend', 'heuristic_v1')} "
@@ -2309,10 +2312,9 @@ if __name__ == "__main__":
         flush=True,
     )
     demo = build_ui()
+    demo.queue()
     demo.launch(
         server_name="0.0.0.0",
         server_port=port,
-        show_error=True,
-        favicon_path=None,
-        css=_build_css(_role_subtitles_for_theme()),
+        share=False,
     )

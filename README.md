@@ -1,3 +1,16 @@
+---
+title: Scam Court AI
+emoji: ??
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: 5.34.0
+app_file: app.py
+pinned: false
+license: mit
+python_version: "3.10"
+---
+
 # ⚖️ Scam Court AI
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)

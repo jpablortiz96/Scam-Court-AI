@@ -1,6 +1,8 @@
-# 🧩 Chrome Companion Plan
+# Chrome Companion Plan
 
-> Privacy-first browser companion for Scam Court AI. **No extension code exists yet.** This document is the implementation specification.
+> The Phase 8A prototype is implemented in `chrome_companion/`. See
+> [`CHROME_COMPANION_PROTOTYPE.md`](CHROME_COMPANION_PROTOTYPE.md) for current
+> behavior. This file records the earlier design plan.
 
 ---
 
@@ -140,4 +142,5 @@ An expandable section exposes the Court Mode view:
 
 ## Status
 
-🚧 **Specification complete. Awaiting post-hackathon implementation.**
+The selected-text Manifest V3 prototype is implemented. Image support,
+production packaging, and store review remain future work.

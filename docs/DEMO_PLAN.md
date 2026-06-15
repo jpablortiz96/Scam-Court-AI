@@ -2,7 +2,7 @@
 
 ## Target Length
 
-75 seconds, with a usable range of 60-90 seconds.
+85 seconds, with a usable range of 75-90 seconds.
 
 ## Recording Setup
 
@@ -61,15 +61,28 @@ interpretation. The Judge and Safety Clerk turn that into a cautious action."
 "If the scam is happening on a call, five fast questions help the user stop
 before sharing money or a code."
 
-### 56-64 seconds: Companion Preview
+### 56-69 seconds: Chrome Companion Prototype
 
-**Action:** Show the WhatsApp, SMS, and marketplace Companion Preview.
+**Action:** On a synthetic WhatsApp, Gmail, or marketplace page, select a
+package-action message. Right-click and choose **Take this to Scam Court**.
+Show the injected `VERIFY FIRST` panel, then click **Open full Court
+explanation**.
 
 **Voiceover:**  
-"The Companion Preview shows where this goes next: bring the Shield verdict to
-the selected message instead of making the user leave the conversation."
+"The Chrome Companion is user-triggered and selected-text only. It does not
+monitor the page. One right-click brings the immediate Shield verdict into the
+current workflow, with the full Court one click away."
 
-### 64-72 seconds: Evaluation Proof
+### 69-77 seconds: Companion Preview
+
+**Action:** Briefly show the in-app WhatsApp, SMS, and marketplace previews.
+
+**Voiceover:**
+
+"The in-app previews show how the same structured result can support other
+message surfaces."
+
+### 77-84 seconds: Evaluation Proof
 
 **Visual:** Evaluation report summary: 60 cases, 0 false low-risk, 0 safety failures.
 
@@ -77,7 +90,7 @@ the selected message instead of making the user leave the conversation."
 "The safety policy is measurable: 60 synthetic regression cases across ten
 scam categories, with zero false low-visible-risk results in the current baseline."
 
-### 72-78 seconds: Closing
+### 84-90 seconds: Closing
 
 **Visual:** Hero and live Space URL.
 
@@ -93,6 +106,7 @@ scam categories, with zero false low-visible-risk results in the current baselin
 - Court role cards
 - Suspicious Call interaction
 - Companion Preview
+- Chrome context-menu action and injected Shield panel
 - Evaluation metrics
 - UI version/build marker
 

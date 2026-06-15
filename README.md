@@ -256,12 +256,33 @@ modal run modal/eval_modal_job.py
 
 Modal is not imported by the normal Gradio application.
 
+## Chrome Companion Prototype
+
+The Manifest V3 prototype in [`chrome_companion/`](chrome_companion/) adds a
+user-triggered **Take this to Scam Court** context-menu action for explicitly
+selected text.
+
+- selected text only;
+- no background page monitoring;
+- no automatic message reading;
+- no history, cookie, bookmark, or clipboard permissions;
+- `VERIFY FIRST` fallback if the API cannot be reached.
+
+Load the folder as an unpacked extension in Chrome Developer Mode. It calls the
+named Gradio `analyze_text` endpoint and displays the immediate Shield result
+inside the current page.
+
+See
+[`docs/CHROME_COMPANION_PROTOTYPE.md`](docs/CHROME_COMPANION_PROTOTYPE.md)
+for installation, configuration, test examples, and limitations.
+
 ## Architecture and Public Proof
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - runtime, data flow, ZeroGPU, and fallbacks
 - [`docs/EVALUATION.md`](docs/EVALUATION.md) - metrics, dataset, and reproduction
 - [`docs/FIELD_NOTES.md`](docs/FIELD_NOTES.md) - build story and lessons learned
 - [`docs/DEMO_PLAN.md`](docs/DEMO_PLAN.md) - 60-90 second demo sequence
+- [`docs/CHROME_COMPANION_PROTOTYPE.md`](docs/CHROME_COMPANION_PROTOTYPE.md) - selected-text extension prototype
 - [`docs/SUBMISSION_COPY.md`](docs/SUBMISSION_COPY.md) - submission and social copy
 - [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md) - JSON report contract
 - [`data/agent_trace_example.json`](data/agent_trace_example.json) - representative public agent trace

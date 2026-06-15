@@ -1,0 +1,213 @@
+:root {
+  color-scheme: dark;
+  --sc-bg: #0d1018;
+  --sc-surface: #171b27;
+  --sc-border: #343b51;
+  --sc-text: #f4f0e8;
+  --sc-muted: #aba6b8;
+  --sc-gold: #d4ad62;
+  --sc-stop: #ef625f;
+  --sc-verify: #f0b95f;
+  --sc-safe: #57c79a;
+}
+
+.scam-court-popup {
+  width: 360px;
+  margin: 0;
+  background: var(--sc-bg);
+  color: var(--sc-text);
+  font: 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.scam-court-popup main {
+  padding: 20px;
+}
+
+.scam-court-popup h1 {
+  margin: 2px 0 8px;
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.scam-court-popup__eyebrow,
+.scam-court-popup label,
+.scam-court-panel__section > span {
+  color: var(--sc-gold);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scam-court-popup__lead {
+  margin: 0 0 16px;
+  color: var(--sc-muted);
+}
+
+.scam-court-popup__privacy {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--sc-border);
+  border-radius: 12px;
+  background: var(--sc-surface);
+}
+
+.scam-court-popup__privacy ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.scam-court-popup label {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.scam-court-popup input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--sc-border);
+  border-radius: 9px;
+  background: #0a0d14;
+  color: var(--sc-text);
+}
+
+.scam-court-popup__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.scam-court-popup button,
+.scam-court-panel button {
+  cursor: pointer;
+  border: 1px solid var(--sc-gold);
+  border-radius: 9px;
+  background: var(--sc-gold);
+  color: #17120a;
+  font: inherit;
+  font-weight: 800;
+}
+
+.scam-court-popup button {
+  flex: 1;
+  padding: 9px 12px;
+}
+
+.scam-court-popup button.secondary {
+  background: transparent;
+  color: var(--sc-text);
+}
+
+.scam-court-popup__status {
+  min-height: 20px;
+  margin: 6px 0 0;
+  color: var(--sc-safe);
+  font-size: 12px;
+}
+
+.scam-court-popup__status.error {
+  color: var(--sc-stop);
+}
+
+.scam-court-panel {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  top: 18px !important;
+  right: 18px !important;
+  box-sizing: border-box !important;
+  width: min(390px, calc(100vw - 36px)) !important;
+  padding: 18px !important;
+  border: 1px solid var(--sc-border) !important;
+  border-radius: 16px !important;
+  background: var(--sc-bg) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45) !important;
+  color: var(--sc-text) !important;
+  font: 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.scam-court-panel__header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-family: Georgia, serif !important;
+  font-size: 18px !important;
+}
+
+.scam-court-panel__close {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border-color: var(--sc-border) !important;
+  background: transparent !important;
+  color: var(--sc-text) !important;
+  font-size: 20px !important;
+}
+
+.scam-court-panel__privacy,
+.scam-court-panel__notice {
+  margin: 7px 0 14px !important;
+  color: var(--sc-muted) !important;
+  font-size: 11px !important;
+}
+
+.scam-court-panel__verdict {
+  margin-top: 12px !important;
+  padding: 12px !important;
+  border-radius: 11px !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.02em !important;
+  text-align: center !important;
+}
+
+.scam-court-panel__verdict--stop {
+  background: color-mix(in srgb, var(--sc-stop) 22%, transparent) !important;
+  color: var(--sc-stop) !important;
+}
+
+.scam-court-panel__verdict--verify {
+  background: color-mix(in srgb, var(--sc-verify) 22%, transparent) !important;
+  color: var(--sc-verify) !important;
+}
+
+.scam-court-panel__verdict--safe {
+  background: color-mix(in srgb, var(--sc-safe) 20%, transparent) !important;
+  color: var(--sc-safe) !important;
+}
+
+.scam-court-panel__score {
+  margin: 7px 0 14px !important;
+  color: var(--sc-muted) !important;
+  text-align: center !important;
+}
+
+.scam-court-panel__section {
+  margin-top: 12px !important;
+  padding: 12px !important;
+  border: 1px solid var(--sc-border) !important;
+  border-radius: 11px !important;
+  background: var(--sc-surface) !important;
+}
+
+.scam-court-panel__section p,
+.scam-court-panel__section ul {
+  margin: 7px 0 0 !important;
+}
+
+.scam-court-panel__evidence {
+  padding-left: 18px !important;
+}
+
+.scam-court-panel__court-button {
+  width: 100% !important;
+  margin-top: 14px !important;
+  padding: 10px 12px !important;
+}
+
+.scam-court-panel__loading {
+  padding: 24px 0 12px !important;
+  color: var(--sc-verify) !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+}

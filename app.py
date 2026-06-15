@@ -681,6 +681,64 @@ def analyze_message(
     )
 
 
+def analyze_text_api(text: str) -> dict[str, Any]:
+    """Return a stable, text-only result for explicit companion requests."""
+    selected_text = (text or "").strip()
+    if not selected_text:
+        return {
+            "verdict": "VERIFY FIRST",
+            "risk_score": 35,
+            "recommended_action": (
+                "No selected text was received. Do not click links or share codes; "
+                "open Scam Court and review the message manually."
+            ),
+            "trusted_contact_script": (
+                "I could not analyze the message automatically. Can you help me "
+                "verify it through an official channel?"
+            ),
+            "evidence_summary": ["No selected text was provided."],
+            "report_id": None,
+        }
+
+    try:
+        report = backend.analyze(selected_text).to_dict()
+    except Exception:
+        return {
+            "verdict": "VERIFY FIRST",
+            "risk_score": 35,
+            "recommended_action": (
+                "Automatic analysis was unavailable. Do not click links or share "
+                "codes; verify through an official channel."
+            ),
+            "trusted_contact_script": (
+                "Scam Court could not analyze this automatically. Can you help me "
+                "verify the message before I act?"
+            ),
+            "evidence_summary": ["The text analysis backend was unavailable."],
+            "report_id": None,
+        }
+
+    evidence_summary = [
+        str(item.get("label"))
+        for item in report.get("detected_patterns", [])
+        if isinstance(item, dict) and item.get("label")
+    ]
+    if not evidence_summary:
+        evidence_summary = ["No strong scam pattern was visible in the selected text."]
+
+    return {
+        "verdict": str(report.get("shield_verdict") or "VERIFY FIRST"),
+        "risk_score": int(report.get("risk_score", 35)),
+        "recommended_action": str(
+            report.get("immediate_action")
+            or "Pause and verify through an official channel before acting."
+        ),
+        "trusted_contact_script": str(report.get("trusted_contact_script") or ""),
+        "evidence_summary": evidence_summary,
+        "report_id": report.get("report_id"),
+    }
+
+
 def _call_result(
     asks_money: bool,
     asks_code: bool,
@@ -1226,6 +1284,16 @@ def build_ui() -> gr.Blocks:
             footer_tagline = gr.HTML(
                 f'<div class="footer-tagline">{_esc(t(lang, "footer_tagline"))}</div>'
             )
+
+        api_text_input = gr.Textbox(visible=False)
+        api_json_output = gr.JSON(visible=False)
+        api_submit = gr.Button(visible=False)
+        api_submit.click(
+            fn=analyze_text_api,
+            inputs=api_text_input,
+            outputs=api_json_output,
+            api_name="analyze_text",
+        )
 
         analysis_outputs = [
             case_summary,

@@ -1,6 +1,9 @@
-# 🧩 Chrome Companion Mode (Mocked)
+# Chrome Companion Mode
 
-> This document describes the planned Chrome extension companion for Scam Court AI. **No extension code exists yet.** This is a design specification for future implementation.
+> A working Manifest V3 prototype now exists in `chrome_companion/`. See
+> [`CHROME_COMPANION_PROTOTYPE.md`](CHROME_COMPANION_PROTOTYPE.md) for current
+> installation, API, privacy, and testing instructions. The material below is
+> retained as early design context.
 
 ---
 
@@ -116,4 +119,5 @@ extension/
 
 ## Status
 
-🚧 **Not yet implemented.** This document serves as the specification for post-hackathon development.
+Prototype implemented for user-triggered selected-text demos. Production
+hardening remains future work.

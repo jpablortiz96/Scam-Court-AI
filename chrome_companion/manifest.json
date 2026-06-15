@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Scam Court AI Companion",
+  "version": "0.1.0",
+  "description": "User-triggered Scam Court analysis for text you explicitly select.",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://huggingface.co/*",
+    "https://*.hf.space/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Scam Court AI Companion",
+    "default_popup": "popup.html"
+  }
+}

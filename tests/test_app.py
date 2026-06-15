@@ -78,6 +78,30 @@ class ScamCourtUiTests(unittest.TestCase):
         self.assertEqual(report["shield_verdict"], "LOW VISIBLE RISK")
         self.assertLess(report["risk_score"], 35)
 
+    def test_companion_api_returns_stable_simplified_result(self):
+        result = app.analyze_text_api(
+            "FedEx delivery failed. Update at https://fedex-track.xyz/update"
+        )
+        self.assertEqual(
+            set(result),
+            {
+                "verdict",
+                "risk_score",
+                "recommended_action",
+                "trusted_contact_script",
+                "evidence_summary",
+                "report_id",
+            },
+        )
+        self.assertEqual(result["verdict"], "VERIFY FIRST")
+        self.assertGreaterEqual(result["risk_score"], 35)
+
+    def test_companion_api_failure_fallback_is_never_low_risk(self):
+        with patch.object(app.backend, "analyze", side_effect=RuntimeError("offline")):
+            result = app.analyze_text_api("Selected message text")
+        self.assertEqual(result["verdict"], "VERIFY FIRST")
+        self.assertGreaterEqual(result["risk_score"], 35)
+
     def test_screenshot_failure_never_returns_low_risk(self):
         with patch("app.get_vision_backend", return_value=FakeVisionBackend()):
             report = app.analyze_message("", "unreadable.png", "en")[1]

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scam Court AI Companion</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="scam-court-popup">
+    <main>
+      <p class="scam-court-popup__eyebrow">Chrome Companion Prototype</p>
+      <h1>Scam Court AI</h1>
+      <p class="scam-court-popup__lead">
+        Select suspicious text, right-click, then choose
+        <strong>Take this to Scam Court</strong>.
+      </p>
+
+      <section class="scam-court-popup__privacy">
+        <strong>Privacy model</strong>
+        <ul>
+          <li>User-triggered only</li>
+          <li>Selected text only</li>
+          <li>No background monitoring</li>
+          <li>No messages are read unless you send them to Scam Court</li>
+        </ul>
+      </section>
+
+      <label for="space-url">Scam Court Space URL</label>
+      <input
+        id="space-url"
+        type="url"
+        spellcheck="false"
+        value="https://huggingface.co/spaces/build-small-hackathon/scam-court-ai"
+      >
+      <p id="status" class="scam-court-popup__status" aria-live="polite"></p>
+
+      <div class="scam-court-popup__actions">
+        <button id="save" type="button">Save URL</button>
+        <button id="open-space" class="secondary" type="button">Open Space</button>
+      </div>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -18,6 +18,25 @@ not whether it can prove fraud with legal certainty.
 The JSON and Markdown reports include every case result, detected pattern IDs,
 policy tags, backend identity, and aggregate metrics.
 
+## Current Reproducible Baseline
+
+The current deterministic heuristic baseline was generated from the 60-case
+dataset with `python tools/evaluate_cases.py --fail-on-safety`.
+
+| Metric | Result |
+|---|---:|
+| Total cases | 60 |
+| Passed cases | 60 |
+| Pass rate | 100% |
+| Verdict accuracy | 100% |
+| Score-range accuracy | 100% |
+| False `LOW_VISIBLE_RISK` count | 0 |
+| Safety failure count | 0 |
+| STOP recall | 100% |
+
+These metrics measure conformance to the repository's synthetic safety policy
+suite. They do not estimate accuracy on the general population of real scams.
+
 ## Why False LOW RISK Is Dangerous
 
 A false positive can inconvenience a user. A false `LOW_VISIBLE_RISK` result can
@@ -72,6 +91,9 @@ Reports are written to:
 outputs/evaluation_report.json
 outputs/evaluation_report.md
 ```
+
+The generated `outputs/` directory is intentionally ignored by Git. Re-run the
+command to reproduce reports from the committed dataset and engine.
 
 ## Run With Modal
 

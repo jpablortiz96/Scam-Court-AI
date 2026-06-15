@@ -11,289 +11,242 @@ license: mit
 python_version: "3.10"
 ---
 
-# ⚖️ Scam Court AI
+# Scam Court AI
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Gradio](https://img.shields.io/badge/gradio-UI-orange.svg)](https://gradio.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![HF Spaces](https://img.shields.io/badge/🤗-Spaces-blue)](https://huggingface.co/spaces)
+## A 3-Second Scam Shield with an AI Courtroom Behind It
 
-> **3-Second Scam Shield + AI Courtroom Explanation for the people you protect.**
+[![Live Space](https://img.shields.io/badge/Hugging_Face-Live_Space-FFD21E)](https://huggingface.co/spaces/build-small-hackathon/scam-court-ai)
+[![Gradio](https://img.shields.io/badge/UI-Gradio-orange)](https://www.gradio.app/)
+[![MiniCPM-V-4](https://img.shields.io/badge/Vision-OpenBMB_MiniCPM--V--4-blue)](https://huggingface.co/openbmb/MiniCPM-V-4)
+[![Evaluation](https://img.shields.io/badge/Safety_Eval-60%2F60_cases_pass-brightgreen)](docs/EVALUATION.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-Scam Court AI is a tiny, multi-agent courtroom that analyzes suspicious WhatsApp messages, SMS, emails, and marketplace chats. It is designed first for **older adults and non-technical family members** who need a clear, calm answer in seconds — then explains the reasoning for anyone who wants to dig deeper.
+**Scam Court AI helps a person pause before clicking, paying, or sharing a code.**
+It gives an immediate `STOP`, `VERIFY FIRST`, or `LOW VISIBLE RISK` action,
+then opens a transparent courtroom explanation for anyone who wants the evidence.
 
-### Four modes, one safe workflow
+**Live Space:**
 
-- 🛡️ **Shield** — High-contrast 3-second verdict: **STOP / VERIFY FIRST / LOW VISIBLE RISK**
-- ⚖️ **Court** — Dramatic interactive trial with Detective, Prosecutor, Defender, Judge, and Safety Clerk
-- 📞 **Suspicious Call** — Five-question quick check for live phone scams
-- 💬 **Companion Preview** — Simulated WhatsApp, SMS, and Marketplace reply cards you can share
+https://huggingface.co/spaces/build-small-hackathon/scam-court-ai
 
-Built for the **Hugging Face Build Small Hackathon** with ≤32B parameters, zero cloud APIs, and CPU-first architecture.
+## The Problem
 
----
+Scams arrive when people are rushed, frightened, or trying to help someone they
+love. A fake package alert, "new number" family message, bank warning, or OTP
+request can create pressure before the recipient has time to reason.
 
-## 🚀 Live Demo
+Older adults and non-technical family members often do not need a long security
+report first. They need one calm instruction:
 
-**[Try it on Hugging Face Spaces →](YOUR_SPACE_LINK_HERE)**
+- Do not click.
+- Do not send the code.
+- Call the person using a saved number.
+- Open the official app yourself.
 
-Or run locally in 30 seconds:
+Scam Court AI puts that protective action first and makes the reasoning
+available second.
+
+## How It Works
+
+1. The user pastes a message, uploads a screenshot, or answers a short call checklist.
+2. MiniCPM-V-4 can extract visible text and screenshot clues when vision is enabled.
+3. The selected text backend produces a structured `CourtroomReport`.
+4. A safety policy prevents incomplete or action-oriented evidence from receiving false reassurance.
+5. The UI shows the immediate Shield verdict, then the Detective, Prosecutor, Defender, Judge, and Safety Clerk explanation.
+6. The result can be exported as JSON for audit or future integrations.
+
+## Five Product Surfaces
+
+### Shield Mode
+
+The urgent path. It returns a large safety verdict, risk score, immediate action,
+and a script for asking a trusted person for help.
+
+### Court Mode
+
+The explanation path. Five courtroom roles turn detected evidence into a
+structured, inspectable decision:
+
+- **Detective:** collects visible red flags.
+- **Prosecutor:** explains the manipulation pattern.
+- **Defender:** tests plausible benign explanations.
+- **Judge:** assigns the court verdict and risk score.
+- **Safety Clerk:** gives safe next steps.
+
+### Suspicious Call
+
+A five-question active-call rescue flow for money requests, OTP requests,
+family impersonation, urgency, and secrecy. It is designed to help someone stop
+the interaction before pressure escalates.
+
+### Companion Preview
+
+A product preview for selected-text workflows in WhatsApp Web, SMS, and
+marketplaces. It demonstrates how a future companion could bring the Shield
+verdict to the message instead of making the user leave the conversation.
+
+### Vision Witness
+
+OpenBMB `openbmb/MiniCPM-V-4` reads uploaded screenshots, extracts visible text,
+classifies the screenshot context, and identifies visual risk clues. Its output
+is evidence for the existing safety engine, not a replacement for the policy.
+
+If vision is unavailable or cannot extract usable text, screenshot-only input
+is forced to `VERIFY FIRST`. The app does not pretend the image was analyzed.
+
+## Models and Decision Layers
+
+| Layer | Implementation | Role |
+|---|---|---|
+| Safety baseline | Deterministic heuristic engine | Fast pattern detection, scoring, policy enforcement, and offline fallback |
+| Optional text backend | `HuggingFaceTB/SmolLM3-3B` | Structured small-model reasoning with heuristic fallback |
+| Vision Witness | `openbmb/MiniCPM-V-4` | Screenshot text extraction and visual evidence |
+| Experience layer | Gradio courtroom personas | Human-readable explanation and immediate action |
+
+The default text backend is heuristic. SmolLM3 and MiniCPM-V are lazy-loaded
+only when selected.
+
+## Why Small Models Fit
+
+This problem is constrained and action-oriented. The product does not need an
+unbounded assistant; it needs fast evidence extraction, a narrow safety policy,
+clear structured output, and reliable fallback behavior.
+
+- Deterministic rules handle known high-risk patterns quickly.
+- A 3B text model can provide optional structured reasoning without becoming a startup dependency.
+- MiniCPM-V-4 supplies the missing screenshot evidence on demand.
+- Each model path falls back to a safer deterministic action when it fails.
+
+Small components make the system easier to inspect, run locally, evaluate, and
+deploy within the hackathon's small-model constraint.
+
+## Safety Philosophy
+
+Scam Court AI optimizes against dangerous reassurance.
+
+- **No false low-risk result when evidence is incomplete.**
+- **Links and action requests resolve to verification, not trust.**
+- **Never click a suspicious message link to verify the message.**
+- **Never share an OTP, password, PIN, or recovery code.**
+- **Never use a phone number supplied by the suspicious message.**
+- **Use an official app, manually typed website, saved number, or trusted contact.**
+- **`LOW VISIBLE RISK` means no strong signal was detected, not a guarantee of safety.**
+
+## Evaluation Proof
+
+The public synthetic suite contains **60 cases across 10 categories**:
+
+- family impersonation
+- OTP/code theft
+- fake bank alerts
+- package delivery scams
+- marketplace deposit scams
+- fake invoices
+- government/refund/stimulus scams
+- romance/emergency-money scams
+- safe benign messages
+- ambiguous action-required messages
+
+Current deterministic baseline:
+
+| Metric | Result |
+|---|---:|
+| Cases passed | 60 / 60 |
+| Verdict accuracy | 100% |
+| Score-range accuracy | 100% |
+| False `LOW VISIBLE RISK` results | 0 |
+| Safety failures | 0 |
+| STOP recall | 100% |
+
+These results are regression results on a synthetic, policy-focused dataset,
+not a claim of real-world scam-detection accuracy. See
+[`docs/EVALUATION.md`](docs/EVALUATION.md).
+
+## Screenshots
+
+| Proof view | Placeholder |
+|---|---|
+| Shield Mode with FedEx screenshot and `VERIFY FIRST` | Add final Shield capture before submission |
+| Court Mode with five role cards and evidence | Add final Court capture before submission |
+| Vision Witness extraction panel | Add MiniCPM-V screenshot evidence capture |
+| Evaluation report summary | Add generated report capture |
+
+## Privacy
+
+- Local CPU mode sends no message or screenshot to a third-party model API.
+- On the public Space, evidence is processed inside the Hugging Face Space session.
+- The application does not intentionally persist uploaded screenshots or message text.
+- Runtime logs contain backend diagnostics and errors, not message contents.
+- JSON export is initiated by the user.
+
+Do not submit passwords, OTPs, full payment-card data, government identifiers,
+or other secrets to any demo application.
+
+## Limitations
+
+- The heuristic engine is English-first and can miss novel wording.
+- Risk scores are weighted safety indicators, not calibrated probabilities.
+- The 60-case dataset is synthetic and balanced for policy coverage.
+- The app does not perform live URL reputation, sender identity, bank, or payment verification.
+- MiniCPM-V extraction can fail on low-resolution, cropped, or visually complex screenshots.
+- A low visible-risk result is not proof that a message is legitimate.
+- Scam Court AI is an educational safety aid, not legal, financial, or cybersecurity advice.
+
+## Run Locally
 
 ```powershell
-# Windows / PowerShell
-cd d:\scam-court-ai
-
-# 1. Set your config (copy template, edit, never commit .env)
+git clone https://github.com/jpablortiz96/Scam-Court-AI.git
+cd Scam-Court-AI
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 Copy-Item .env.example .env
-# Edit .env with your preferred settings, then restart your terminal
-
-# 2. Create virtual environment
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run
 python app.py
 ```
 
-> **Low C: drive space?** Move all caches (pip, Hugging Face, PyTorch) to **D:** — see [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md).
+The CPU-safe defaults are:
 
-Then open http://localhost:7860
-
----
-
-## 🖼️ Screenshot
-
-*(Add screenshot here after first UI run)*
-
----
-
-## 🏗️ Architecture
-
-```
-scam-court-ai/
-├── app.py                     # Gradio UI (Shield / Court / Call / Companion tabs)
-├── courtroom/
-│   ├── __init__.py
-│   ├── engine.py              # Heuristic analysis engine + Shield Mode logic
-│   ├── backends/              # Pluggable text model backends
-│   │   ├── base.py
-│   │   ├── heuristic.py
-│   │   └── smollm3.py
-│   ├── vision_backends/       # Pluggable vision model backends (Phase 6A)
-│   │   ├── base.py
-│   │   ├── none.py
-│   │   └── minicpm_v.py
-│   ├── config.py              # Backend selection from environment
-│   ├── json_parser.py         # Model JSON validation + gap filling
-│   ├── prompts.py             # Structured prompts for SmolLM3
-│   ├── personas.py            # Persona prompts and metadata
-│   └── utils.py               # Sanitization & formatting helpers
-├── data/
-│   ├── scam_examples_seed.json
-│   ├── evaluation_cases.json
-│   └── agent_trace_example.json
-├── docs/
-│   ├── INTEGRATION_CONTRACT.md # Stable v2 JSON schema
-│   ├── CHROME_COMPANION_PLAN.md
-│   ├── PRIZE_STRATEGY.md
-│   ├── FIELD_NOTES.md
-│   ├── DEMO_SCRIPT.md
-│   └── MODEL_CARD.md
-├── requirements.txt
-├── .env.example
-└── LICENSE
+```text
+SCAM_COURT_BACKEND=heuristic
+SCAM_COURT_VISION_BACKEND=none
+SCAM_COURT_VISION_MODEL=openbmb/MiniCPM-V-4
 ```
 
-### Design Philosophy
-- **Modular engine:** Swap heuristic → SmolLM3-3B → MiniCPM-V without touching `app.py`.
-- **Privacy-first:** No API keys, no data leaves your machine.
-- **Elder-safe UX:** Shield Mode uses large type, high contrast, and one-sentence actions.
-- **Dramatic Court UX:** Custom CSS makes the Court tab feel like a courtroom, not a chatbot.
-- **Vision-ready:** Screenshot upload is wired; MiniCPM-V integration is Phase 6B.
+Open http://localhost:7860.
 
-### Backend Modes
+## Deploy on Hugging Face Spaces
 
-Scam Court AI supports two analysis backends, selectable via the `SCAM_COURT_BACKEND` environment variable.
+Create or duplicate a **Gradio Space**, push this repository, and select
+**ZeroGPU** hardware for screenshot inference. Configure these Space variables:
 
-| Mode | Env Value | Speed | Model | Requirements |
-|------|-----------|-------|-------|--------------|
-| **Heuristic** (default) | `heuristic` | < 50 ms | None | None |
-| **SmolLM3** | `smollm3` | 10–30 s | HuggingFaceTB/SmolLM3-3B | `transformers`, `torch` |
-
-**Default behavior:** `SCAM_COURT_BACKEND` is unset or invalid → heuristic runs instantly.
-
-**Switching to SmolLM3:**
-```powershell
-# Windows
-$env:SCAM_COURT_BACKEND = "smollm3"
-python app.py
+```text
+SCAM_COURT_BACKEND=heuristic
+SCAM_COURT_VISION_BACKEND=minicpm_v
+SCAM_COURT_VISION_MODEL=openbmb/MiniCPM-V-4
 ```
 
-```bash
-# Linux / macOS
-export SCAM_COURT_BACKEND=smollm3
-python app.py
-```
+`analyze_message` is registered through the real `@spaces.GPU` decorator on
+Hugging Face. MiniCPM-V still loads lazily after a screenshot request. For a
+CPU-only Space, set `SCAM_COURT_VISION_BACKEND=none`.
 
-**Fallback:** If SmolLM3 fails to load or generates invalid output, the app automatically falls back to heuristic and marks `model_backend: "heuristic_fallback_after_smollm3_error"` in the report trace.
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for startup and fallback details.
 
-**Install model dependencies (only when using SmolLM3):**
-```bash
-pip install transformers torch
-```
-
-### Vision Backend (Screenshot Evidence)
-
-Scam Court AI accepts screenshot uploads in Shield and Court modes. When `SCAM_COURT_VISION_BACKEND=minicpm_v` is set, OpenBMB **MiniCPM-V-4** actually reads the screenshot, extracts visible text, classifies the screenshot type (WhatsApp, SMS, email, marketplace, invoice, bank alert), and lists visual scam clues. The extracted text is then fed into the existing Scam Court engine for a full verdict.
-
-| Mode | Env Value | Description |
-|------|-----------|-------------|
-| **None** (default) | `none` | Accepts screenshots but does not run vision model. Shows safe fallback: *"Screenshot received. Vision model is not active yet. Paste the message text for full analysis."* |
-| **MiniCPM-V** | `minicpm_v` | Loads `openbmb/MiniCPM-V-4` lazily and performs real OCR + vision-language analysis. |
-
-**Default behavior:** `SCAM_COURT_VISION_BACKEND` is unset or invalid → screenshot is accepted but the app forces **VERIFY FIRST** and asks you to paste text.
-
-**Vision dependencies**
-
-MiniCPM-V-4 requires the vision stack. All dependencies are listed in `requirements.txt` and loaded **lazily** — the app still starts instantly when `SCAM_COURT_VISION_BACKEND=none`.
+## Run the Safety Suite
 
 ```powershell
-# Install all dependencies (includes torch, transformers, pillow, etc.)
-pip install -r requirements.txt
-```
-
-**Activate MiniCPM-V:**
-```powershell
-# Option A: Set per session
-$env:SCAM_COURT_VISION_BACKEND = "minicpm_v"
-$env:SCAM_COURT_VISION_MODEL = "openbmb/MiniCPM-V-4"
-python app.py
-
-# Option B: Persist across terminals (recommended)
-# Edit .env and set SCAM_COURT_VISION_BACKEND=minicpm_v
-# Restart your terminal or VS Code
-python app.py
-```
-
-**Default behavior:** `SCAM_COURT_VISION_BACKEND=none` → screenshot is accepted but the app forces **VERIFY FIRST** and asks you to paste text. No model is downloaded and startup stays fast.
-
-**Safety behavior:** If the vision model fails to load or cannot read the image, the app never returns **LOW VISIBLE RISK**. It forces **VERIFY FIRST** with a clear warning.
-
-**Privacy note:** Uploaded screenshots are processed only for the current session. No images are stored or transmitted.
-
-**Local hardware too slow?** MiniCPM-V-4 runs best on a GPU. The Hugging Face deployment supports ZeroGPU through the decorated shared analysis handler. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
-
-**Low C: drive space?** See [`docs/WINDOWS_D_DRIVE_SETUP.md`](docs/WINDOWS_D_DRIVE_SETUP.md) to move pip, Hugging Face, and PyTorch caches to **D:**.
-
-**Compatibility note:** MiniCPM-V-4 runs with **Transformers 4.x**. If you see an error like `'MiniCPMV' object has no attribute 'all_tied_weights_keys'`, your Transformers version is incompatible (often 5.x or an RC). Fix it with:
-```powershell
-pip install "transformers>=4.45,<5"
-```
-
----
-
-## 🛡️ Shield Mode Example
-
-**Input:**
-> "Hi honey, it's Mom. I got a new phone and lost all my contacts. Can you send me $500 via Zelle? I'm stuck at the grocery store and my card isn't working. Please don't tell Dad, it's embarrassing. Send it to this number quickly!"
-
-**Shield Verdict:**
-> **VERIFY FIRST** — Risk Score: 47/100  
-> Call your family member directly on a number you already know. Do not reply to this message.
-
-**Tell a trusted contact:**
-> "I'm checking this message because someone is pretending to be family. Can you help me reach [name] on the number I already have to confirm they're okay?"
-
----
-
-## 🧑‍⚖️ Court Mode Example
-
-**Judge Verdict:**
-> **SCAM** — Risk Score: 88/100  
-> The evidence is overwhelming. The court finds 3 distinct red flags: family impersonation, false urgency, and payment demand. Do not respond or send money.
-
-**Safety Clerk:**
-> *Do not reply. Do not click links. Do not send codes or money.* Block the sender and report the message.
-> 1. Forward the message to your carrier's spam report number (e.g., 7726).
-> 2. Report to the FTC at reportfraud.ftc.gov.
-> 3. Warn family members who might receive similar messages.
-
----
-
-## 🏆 Prize Tracks
-
-| Track | Strategy |
-|-------|----------|
-| Backyard AI | Mom-friendly Shield UI, safe replies, zero setup |
-| OpenBMB | MiniCPM-V-4_5 vision integration (roadmap) |
-| Tiny Titan | SmolLM3-3B reasoning core (roadmap) |
-| Off-Brand | Courtroom metaphor — not a chatbot |
-| Best Demo | Cinematic 60-second video (script ready) |
-| Best Agent | Multi-agent traces with structured reasoning |
-| Modal | Batch evaluation on GPUs (roadmap) |
-| Community Choice | Shareable verdict cards + social campaign |
-
-Full strategy: [`docs/PRIZE_STRATEGY.md`](docs/PRIZE_STRATEGY.md)
-
----
-
-## 🛠️ Development
-
-### Windows + VS Code + PowerShell
-
-```powershell
-# 1. Clone
-cd d:\scam-court-ai
-
-# 2. Virtual environment
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-# 3. Install
-pip install -r requirements.txt
-
-# 4. Run
-python app.py
-
-# 5. Format & lint (optional)
-pip install black ruff
-black .
-ruff check .
-```
-
-### Project Commands
-
-```powershell
-# Run unit tests
-python -m unittest discover -s tests -v
-
-# Run evaluation
-python tools/evaluate_cases.py
-
-# Export report for an example
-python -c "from courtroom import CourtroomEngine; print(CourtroomEngine().analyze(open('data/scam_examples_seed.json').read()))"
-```
-
----
-
-## Evaluation & Safety Tests
-
-The repository includes 60 synthetic cases across ten categories, with explicit
-guards against dangerous false `LOW VISIBLE RISK` results. The runner reports
-pass rate, verdict accuracy, false-low-risk and safety-failure counts,
-category-level performance, and average risk score by category.
-
-```powershell
+python -m compileall app.py courtroom tools modal tests
 python -m unittest discover -s tests -v
 python tools/evaluate_cases.py --fail-on-safety
 ```
 
-Reports are written to `outputs/evaluation_report.json` and
-`outputs/evaluation_report.md`. Modal execution is optional and is never
-required by the Gradio application:
+Reports are written to:
+
+```text
+outputs/evaluation_report.json
+outputs/evaluation_report.md
+```
+
+Optional Modal execution:
 
 ```powershell
 python -m pip install modal
@@ -301,31 +254,30 @@ modal setup
 modal run modal/eval_modal_job.py
 ```
 
-See [`docs/EVALUATION.md`](docs/EVALUATION.md) for metric definitions,
-guardrails, and limitations.
+Modal is not imported by the normal Gradio application.
 
----
+## Architecture and Public Proof
 
-## 📚 Documentation
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - runtime, data flow, ZeroGPU, and fallbacks
+- [`docs/EVALUATION.md`](docs/EVALUATION.md) - metrics, dataset, and reproduction
+- [`docs/FIELD_NOTES.md`](docs/FIELD_NOTES.md) - build story and lessons learned
+- [`docs/DEMO_PLAN.md`](docs/DEMO_PLAN.md) - 60-90 second demo sequence
+- [`docs/SUBMISSION_COPY.md`](docs/SUBMISSION_COPY.md) - submission and social copy
+- [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md) - JSON report contract
+- [`data/agent_trace_example.json`](data/agent_trace_example.json) - representative public agent trace
 
-- [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md) — Stable JSON schema v2.1 for integrations
-- [`docs/EVALUATION.md`](docs/EVALUATION.md) — Safety dataset, metrics, and local/Modal execution
-- [`docs/CHROME_COMPANION_PLAN.md`](docs/CHROME_COMPANION_PLAN.md) — Privacy-first browser extension spec
-- [`docs/PRIZE_STRATEGY.md`](docs/PRIZE_STRATEGY.md) — How we target every award
-- [`docs/FIELD_NOTES.md`](docs/FIELD_NOTES.md) — Architecture decisions & roadmap
-- [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — 60-second video storyboard
-- [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) — Model card for hackathon judges
+## Hackathon Alignment
 
----
+| Badge or award | Public evidence |
+|---|---|
+| Backyard AI | A concrete safety workflow for older adults and families |
+| OpenBMB | MiniCPM-V-4 is the working Vision Witness |
+| Off-Brand | A custom premium courtroom interface rather than a generic chatbot |
+| Best Agent | Structured Detective-to-Safety-Clerk trace and JSON export |
+| Best Demo | Immediate screenshot-to-verdict narrative with visible evidence |
+| Field Notes | A publishable technical and human build story |
+| Modal | Reproducible optional batch evaluation job |
 
-## 📄 License
+## License
 
-MIT — see [LICENSE](LICENSE)
-
----
-
-## 🙋‍♂️ Team
-
-Built with urgency, paranoia, and justice for the Hugging Face Build Small Hackathon.
-
-> *"Scam Court AI puts suspicious messages on trial — and gives families a shield."*
+MIT. See [`LICENSE`](LICENSE).

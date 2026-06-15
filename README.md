@@ -33,6 +33,54 @@ inspectable five-role AI courtroom.
 
 > The shield comes first. The explanation follows.
 
+## Build Small Hackathon Submission
+
+| Submission field | Details |
+|---|---|
+| **Project** | Scam Court AI |
+| **Eligible Track** | Backyard AI |
+| **Live Gradio Space** | [https://huggingface.co/spaces/build-small-hackathon/scam-court-ai](https://huggingface.co/spaces/build-small-hackathon/scam-court-ai) |
+| **Demo Video** | [https://youtu.be/Z8yVgiFjQf8](https://youtu.be/Z8yVgiFjQf8) |
+| **GitHub Repository** | [https://github.com/jpablortiz96/Scam-Court-AI](https://github.com/jpablortiz96/Scam-Court-AI) |
+| **Social Post** | [https://www.linkedin.com/feed/update/urn:li:activity:7472375840933187585](https://www.linkedin.com/feed/update/urn:li:activity:7472375840933187585) |
+
+### Eligibility Checklist
+
+- [x] **Small Models Only:** every model used by the project is under the
+  32B-parameter cap.
+- [x] **Gradio App:** deployed as a Gradio Space inside the official
+  `build-small-hackathon` Hugging Face organization.
+- [x] **Demo Video:** [watch the final YouTube demo](https://youtu.be/Z8yVgiFjQf8).
+- [x] **Social Post:** [view the final LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7472375840933187585).
+- [x] **ZeroGPU Limit:** this submission uses one ZeroGPU Space.
+
+### Submission Models
+
+- `heuristic_v1` deterministic text safety engine.
+- `openbmb/MiniCPM-V-4` Vision Witness for screenshot evidence.
+- Optional `HuggingFaceTB/SmolLM3-3B` backend scaffold with deterministic
+  fallback. It remains within the 32B rule.
+
+### Prize and Badge Positioning
+
+**Backyard AI · OpenBMB Awards · Off-Brand · Best Agent · Best Demo · Field
+Notes · Modal Awards · Best Use of Codex**
+
+For **Best Use of Codex**, Codex was used holistically across the project:
+UI/UX refactoring, Gradio compatibility fixes, Hugging Face Space deployment,
+ZeroGPU integration, README and architecture documentation, the evaluation
+suite, Chrome Companion prototype, and final submission polish.
+
+### Submission Safety Notes
+
+- Screenshot analysis failure returns `VERIFY FIRST`, never a low-risk result.
+- Suspicious links and action requests require verification through an
+  independently opened official channel.
+- OTP codes, passwords, money, secrecy, gift cards, and crypto requests
+  escalate toward `STOP`.
+- Chrome Companion is user-triggered and selected-text only; it does not
+  monitor pages in the background.
+
 ![Scam Court AI Shield Mode analyzing a synthetic delivery screenshot](docs/assets/screenshots/01-shield-vision-witness.png)
 
 ## The Moment of Risk

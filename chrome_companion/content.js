@@ -5,13 +5,28 @@
   globalThis.__scamCourtCompanionLoaded = true;
 
   const PANEL_ID = "scam-court-companion-panel";
+  let activeRequestId = null;
+  let dismissedRequestId = null;
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "SCAM_COURT_LOADING") {
-      renderLoading();
+      activeRequestId = message.requestId || null;
+      dismissedRequestId = null;
+      renderLoading(message.selectedText || "");
     }
     if (message?.type === "SCAM_COURT_RESULT") {
-      renderResult(message.result, message.spaceUrl);
+      if (
+        message.requestId &&
+        (message.requestId !== activeRequestId ||
+          message.requestId === dismissedRequestId)
+      ) {
+        return;
+      }
+      renderResult(
+        message.result,
+        message.spaceUrl,
+        message.selectedText || ""
+      );
     }
   });
 
@@ -28,20 +43,25 @@
     return panel;
   }
 
-  function renderLoading() {
+  function renderLoading(selectedText) {
     const panel = createPanel();
     panel.innerHTML = `
       <div class="scam-court-panel__header">
         <strong>Scam Court AI</strong>
         <button class="scam-court-panel__close" type="button" aria-label="Close">×</button>
       </div>
-      <div class="scam-court-panel__privacy">Selected text only · User-triggered</div>
+      <div class="scam-court-panel__privacy">User-triggered only · Selected text only · No background monitoring</div>
+      <section class="scam-court-panel__selected" hidden>
+        <span>Analyzing selection</span>
+        <p></p>
+      </section>
       <div class="scam-court-panel__loading">Analyzing the selected text…</div>
     `;
+    setSelectedText(panel, selectedText);
     bindClose(panel);
   }
 
-  function renderResult(result, spaceUrl) {
+  function renderResult(result, spaceUrl, selectedText) {
     const panel = createPanel();
     const verdict = result?.verdict || "VERIFY FIRST";
     const kind =
@@ -60,6 +80,10 @@
         <button class="scam-court-panel__close" type="button" aria-label="Close">×</button>
       </div>
       <div class="scam-court-panel__privacy">User-triggered only · Selected text only · No background monitoring</div>
+      <section class="scam-court-panel__selected" hidden>
+        <span>Analyzed selection</span>
+        <p></p>
+      </section>
       <div class="scam-court-panel__verdict scam-court-panel__verdict--${kind}"></div>
       <div class="scam-court-panel__score"></div>
       <section class="scam-court-panel__section">
@@ -74,6 +98,7 @@
       <p class="scam-court-panel__notice">No messages are read unless you explicitly send selected text to Scam Court.</p>
     `;
 
+    setSelectedText(panel, selectedText);
     panel.querySelector(".scam-court-panel__verdict").textContent = verdict;
     panel.querySelector(".scam-court-panel__score").textContent =
       `Risk score: ${Number(result?.risk_score ?? 35)}/100`;
@@ -102,9 +127,23 @@
     bindClose(panel);
   }
 
+  function setSelectedText(panel, selectedText) {
+    const section = panel.querySelector(".scam-court-panel__selected");
+    const text = String(selectedText || "").trim();
+    if (!section || !text) {
+      return;
+    }
+    section.hidden = false;
+    section.querySelector("p").textContent =
+      text.length > 220 ? `${text.slice(0, 217)}…` : text;
+  }
+
   function bindClose(panel) {
     panel
       .querySelector(".scam-court-panel__close")
-      .addEventListener("click", () => panel.remove());
+      .addEventListener("click", () => {
+        panel.remove();
+        dismissedRequestId = activeRequestId;
+      });
   }
 })();

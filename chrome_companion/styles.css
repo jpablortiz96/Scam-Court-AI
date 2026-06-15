@@ -1,5 +1,5 @@
-:root {
-  color-scheme: dark;
+.scam-court-popup,
+.scam-court-panel {
   --sc-bg: #0d1018;
   --sc-surface: #171b27;
   --sc-border: #343b51;
@@ -12,6 +12,7 @@
 }
 
 .scam-court-popup {
+  color-scheme: dark;
   width: 360px;
   margin: 0;
   background: var(--sc-bg);
@@ -118,12 +119,22 @@
   box-sizing: border-box !important;
   width: min(390px, calc(100vw - 36px)) !important;
   padding: 18px !important;
-  border: 1px solid var(--sc-border) !important;
+  border: 1px solid rgba(212, 173, 98, 0.7) !important;
   border-radius: 16px !important;
-  background: var(--sc-bg) !important;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45) !important;
+  background: rgba(13, 16, 24, 0.97) !important;
+  box-shadow:
+    0 28px 80px rgba(5, 8, 15, 0.38),
+    0 0 0 1px rgba(212, 173, 98, 0.14),
+    0 0 32px rgba(212, 173, 98, 0.16) !important;
+  backdrop-filter: blur(8px) saturate(112%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(112%) !important;
   color: var(--sc-text) !important;
   font: 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+::selection {
+  background: rgba(212, 173, 98, 0.38);
+  color: inherit;
 }
 
 .scam-court-panel__header {
@@ -188,6 +199,33 @@
   border: 1px solid var(--sc-border) !important;
   border-radius: 11px !important;
   background: var(--sc-surface) !important;
+}
+
+.scam-court-panel__selected {
+  margin-top: 12px !important;
+  padding: 10px 12px !important;
+  border-left: 3px solid var(--sc-gold) !important;
+  border-radius: 8px !important;
+  background: rgba(212, 173, 98, 0.09) !important;
+}
+
+.scam-court-panel__selected > span {
+  color: var(--sc-gold) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.scam-court-panel__selected p {
+  display: -webkit-box !important;
+  margin: 5px 0 0 !important;
+  overflow: hidden !important;
+  color: var(--sc-text) !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 3 !important;
 }
 
 .scam-court-panel__section p,

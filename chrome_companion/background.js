@@ -1,6 +1,7 @@
 const MENU_ID = "take-to-scam-court";
 const DEFAULT_SPACE_URL =
   "https://huggingface.co/spaces/build-small-hackathon/scam-court-ai";
+let requestSequence = 0;
 
 const SAFE_FALLBACK = {
   verdict: "VERIFY FIRST",
@@ -30,24 +31,47 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const selectedText = (info.selectionText || "").trim();
+  const requestId = `${tab.id}-${Date.now()}-${++requestSequence}`;
   await injectCompanion(tab.id);
+  await sendToTab(tab.id, {
+    type: "SCAM_COURT_LOADING",
+    requestId,
+    selectedText
+  });
 
   if (!selectedText) {
-    await showResult(tab.id, SAFE_FALLBACK, DEFAULT_SPACE_URL);
+    await showResult(
+      tab.id,
+      SAFE_FALLBACK,
+      DEFAULT_SPACE_URL,
+      requestId,
+      selectedText
+    );
     return;
   }
 
-  await sendToTab(tab.id, { type: "SCAM_COURT_LOADING" });
   const { spaceUrl = DEFAULT_SPACE_URL } = await chrome.storage.local.get(
     "spaceUrl"
   );
 
   try {
     const result = await analyzeSelectedText(spaceUrl, selectedText);
-    await showResult(tab.id, normalizeResult(result), spaceUrl);
+    await showResult(
+      tab.id,
+      normalizeResult(result),
+      spaceUrl,
+      requestId,
+      selectedText
+    );
   } catch (error) {
     console.warn("Scam Court Companion analysis failed:", error);
-    await showResult(tab.id, SAFE_FALLBACK, spaceUrl);
+    await showResult(
+      tab.id,
+      SAFE_FALLBACK,
+      spaceUrl,
+      requestId,
+      selectedText
+    );
   }
 });
 
@@ -79,11 +103,13 @@ async function sendToTab(tabId, message) {
   }
 }
 
-async function showResult(tabId, result, spaceUrl) {
+async function showResult(tabId, result, spaceUrl, requestId, selectedText) {
   await sendToTab(tabId, {
     type: "SCAM_COURT_RESULT",
     result,
-    spaceUrl: normalizeSpacePageUrl(spaceUrl)
+    spaceUrl: normalizeSpacePageUrl(spaceUrl),
+    requestId,
+    selectedText
   });
 }
 

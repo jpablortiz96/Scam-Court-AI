@@ -267,11 +267,11 @@ ruff check .
 ### Project Commands
 
 ```powershell
-# Run tests (when added)
-python -m pytest tests/
+# Run unit tests
+python -m unittest discover -s tests -v
 
 # Run evaluation
-python -m scripts.evaluate
+python tools/evaluate_cases.py
 
 # Export report for an example
 python -c "from courtroom import CourtroomEngine; print(CourtroomEngine().analyze(open('data/scam_examples_seed.json').read()))"
@@ -279,9 +279,37 @@ python -c "from courtroom import CourtroomEngine; print(CourtroomEngine().analyz
 
 ---
 
+## Evaluation & Safety Tests
+
+The repository includes 60 synthetic cases across ten categories, with explicit
+guards against dangerous false `LOW VISIBLE RISK` results. The runner reports
+pass rate, verdict accuracy, false-low-risk and safety-failure counts,
+category-level performance, and average risk score by category.
+
+```powershell
+python -m unittest discover -s tests -v
+python tools/evaluate_cases.py --fail-on-safety
+```
+
+Reports are written to `outputs/evaluation_report.json` and
+`outputs/evaluation_report.md`. Modal execution is optional and is never
+required by the Gradio application:
+
+```powershell
+python -m pip install modal
+modal setup
+modal run modal/eval_modal_job.py
+```
+
+See [`docs/EVALUATION.md`](docs/EVALUATION.md) for metric definitions,
+guardrails, and limitations.
+
+---
+
 ## 📚 Documentation
 
 - [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md) — Stable JSON schema v2.1 for integrations
+- [`docs/EVALUATION.md`](docs/EVALUATION.md) — Safety dataset, metrics, and local/Modal execution
 - [`docs/CHROME_COMPANION_PLAN.md`](docs/CHROME_COMPANION_PLAN.md) — Privacy-first browser extension spec
 - [`docs/PRIZE_STRATEGY.md`](docs/PRIZE_STRATEGY.md) — How we target every award
 - [`docs/FIELD_NOTES.md`](docs/FIELD_NOTES.md) — Architecture decisions & roadmap

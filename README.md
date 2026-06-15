@@ -9,6 +9,15 @@ app_file: app.py
 pinned: false
 license: mit
 python_version: "3.10"
+tags:
+  - track:backyard
+  - track:wood
+  - sponsor:openbmb
+  - sponsor:openai
+  - sponsor:modal
+  - achievement:offbrand
+  - achievement:sharing
+  - achievement:fieldnotes
 ---
 
 # Scam Court AI

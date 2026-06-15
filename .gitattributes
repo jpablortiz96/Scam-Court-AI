@@ -1,0 +1,2 @@
+docs/assets/architecture/*.png filter=lfs diff=lfs merge=lfs -text
+docs/assets/screenshots/*.png filter=lfs diff=lfs merge=lfs -text

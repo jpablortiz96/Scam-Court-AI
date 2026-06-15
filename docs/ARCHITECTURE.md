@@ -7,6 +7,11 @@ deterministic safety policy, structured reporting, and presentation. The
 default path is CPU-safe and deterministic. Optional text and vision models are
 lazy-loaded and fall back to conservative behavior.
 
+![Rendered Scam Court AI architecture](assets/architecture/scam-court-architecture.svg)
+
+The editable source for the rendered diagram is
+[`assets/architecture/scam-court-architecture.mmd`](assets/architecture/scam-court-architecture.mmd).
+
 ```mermaid
 flowchart LR
     U["User message or screenshot"] --> UI["Gradio product modes"]
@@ -22,7 +27,7 @@ flowchart LR
     VISION --> MCPM["MiniCPM-V-4 Vision Witness"]
     MCPM --> EXTRACT["Extracted text + visual clues"]
     NONE --> FALLBACK["Vision unavailable state"]
-    EXTRACT --> POLICY["Heuristic safety policy"]
+    EXTRACT --> POLICY["Elder-safety policy"]
     FALLBACK --> POLICY
     HEUR --> POLICY
     SMOL --> POLICY
@@ -49,6 +54,37 @@ flowchart LR
 | `chrome_companion/` | Manifest V3 selected-text client |
 | `tools/evaluate_cases.py` | Local evaluation runner and JSON/Markdown report generation |
 | `modal/eval_modal_job.py` | Optional remote execution of the same deterministic evaluation |
+
+## Gradio UI Architecture
+
+The UI is a set of product views over shared analysis state rather than a
+collection of independent demos.
+
+```mermaid
+flowchart TD
+    STATE["Shared report state"] --> SHIELD["Shield Mode"]
+    STATE --> COURT["Court Mode"]
+    STATE --> PREVIEW["Companion Preview"]
+    STATE --> EXPORT["JSON export"]
+    CALLSTATE["Call-check state"] --> CALL["Suspicious Call"]
+    LANG["Language state"] --> SHIELD
+    LANG --> COURT
+    LANG --> CALL
+    LANG --> PREVIEW
+    THEME["Theme state"] --> ROOT["Root theme attributes"]
+    ROOT --> SHIELD
+    ROOT --> COURT
+    ROOT --> CALL
+    ROOT --> PREVIEW
+```
+
+`app.py` owns Gradio component construction and event wiring. Render helpers
+turn the report into HTML for verdict cards, Vision Witness evidence, court
+roles, and companion previews. `courtroom/ui/i18n.py` contains the translation
+catalog, while `courtroom/ui/styles.py` defines the shared visual system.
+
+Language and theme are explicit UI state. They do not alter model IDs, JSON
+keys, environment variables, or the underlying safety decision.
 
 ## Evidence and Decision Flow
 
@@ -141,6 +177,10 @@ The result includes status, model ID, screenshot type, extracted text, visual
 clues, recommended text for analysis, confidence, and an error field when
 needed.
 
+Vision is evidence extraction, not the final authority. The deterministic
+policy still decides whether the user should stop, verify independently, or
+continue with normal caution.
+
 ## Fallback Strategy
 
 | Condition | Required behavior |
@@ -231,6 +271,39 @@ recall, false reassurance count, and safety failures.
 Generated reports are ignored because they are reproducible from committed
 inputs. The same runner can execute locally or through the optional Modal job;
 Modal is not imported by the Gradio application.
+
+## Privacy Boundaries
+
+| Boundary | Design |
+|---|---|
+| Local heuristic mode | No third-party model API is required |
+| Public Space | Evidence is processed inside the Hugging Face Space runtime |
+| Screenshot lifecycle | The application does not intentionally persist uploads |
+| Runtime diagnostics | Backend and error metadata are logged; message and screenshot contents are not |
+| JSON export | Initiated by the user |
+| Chrome Companion | Sends only explicitly selected text after the context-menu action |
+| Browser monitoring | No persistent content script, DOM observer, history, cookie, bookmark, or clipboard access |
+| Credentials | `.env`, Hugging Face tokens, Modal tokens, caches, and model weights are excluded from version control |
+
+The application is not an identity-verification service. It does not query live
+bank, carrier, sender, domain-reputation, or payment systems. Independent
+verification remains an explicit user action.
+
+## Failure Matrix
+
+```mermaid
+flowchart LR
+    A["Evidence request"] --> B{"Failure point"}
+    B -->|Vision unreadable| V["Disclose failure<br/>VERIFY FIRST"]
+    B -->|MiniCPM-V unavailable| V
+    B -->|SmolLM3 failure| H["Use heuristic_v1 report"]
+    B -->|Chrome API failure| C["Local overlay fallback<br/>VERIFY FIRST"]
+    B -->|No failure| P["Normal safety policy"]
+```
+
+The system distinguishes availability from confidence. A component failure
+does not become a low-risk conclusion and is never hidden behind an invented
+analysis result.
 
 ## Deployment Profiles
 

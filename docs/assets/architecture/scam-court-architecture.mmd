@@ -1,0 +1,61 @@
+flowchart TB
+    U["User message or screenshot"] --> S["Shield Mode"]
+    S --> R{"Evidence router"}
+
+    subgraph EVIDENCE["Evidence layer"]
+        direction LR
+        V["Vision Witness<br/>MiniCPM-V-4"] --> E["Extracted text<br/>visual clues + confidence"]
+        E --> T["Text safety engine<br/>heuristic_v1"]
+    end
+
+    R -->|Screenshot| V
+    R -->|Text| T
+    V -->|Unreadable screenshot| VF["VERIFY FIRST<br/>vision evidence incomplete"]
+    V -->|MiniCPM-V unavailable| VF
+
+    T --> P["Elder-safety policy"]
+
+    subgraph POLICY["Action policy"]
+        direction LR
+        STOP["STOP<br/>OTP / password / money + urgency"]
+        VERIFY["VERIFY FIRST<br/>link / action / incomplete evidence"]
+        LOW["LOW VISIBLE RISK<br/>no strong visible signal"]
+    end
+
+    P --> STOP
+    P --> VERIFY
+    P --> LOW
+
+    STOP --> J["CourtroomReport JSON"]
+    VERIFY --> J
+    LOW --> J
+    VF --> J
+
+    subgraph DELIVERY["Product and proof surfaces"]
+        direction LR
+        CARD["Verdict card<br/>immediate action"]
+        COURT["Court explanation<br/>Detective → Safety Clerk"]
+        EXPORT["Export JSON"]
+        EVAL["Evaluation Suite<br/>60 cases + Modal scaffold"]
+    end
+
+    J --> CARD
+    J --> COURT
+    J --> EXPORT
+    J --> EVAL
+
+    CARD --> CHROME["Chrome Companion<br/>selected text only"]
+    CHROME --> FULL["Open full Court"]
+    CHROME -->|API failure| CF["VERIFY FIRST<br/>local safe fallback"]
+
+    classDef safety fill:#191f2a,stroke:#d4ad62,color:#f5f1e8,stroke-width:2px;
+    classDef stop fill:#351b23,stroke:#ef625f,color:#fff;
+    classDef verify fill:#372b1b,stroke:#f0b95f,color:#fff;
+    classDef safe fill:#173127,stroke:#57c79a,color:#fff;
+    classDef fallback fill:#242733,stroke:#a9afbf,color:#fff,stroke-dasharray:5 3;
+
+    class S,V,T,P,J,CARD,COURT,EXPORT,EVAL,CHROME,FULL safety;
+    class STOP stop;
+    class VERIFY verify;
+    class LOW safe;
+    class VF,CF fallback;

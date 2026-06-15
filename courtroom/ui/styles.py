@@ -249,10 +249,14 @@ footer {{
   position: sticky;
   top: 10px;
   z-index: 30;
+  height: auto !important;
+  min-height: 72px;
+  align-items: center;
   width: min(920px, 100%);
   margin: 0 auto 28px !important;
-  padding: 6px !important;
+  padding: 8px !important;
   overflow: visible !important;
+  box-sizing: border-box;
   border: 1px solid var(--sc-border) !important;
   border-radius: 18px !important;
   background: color-mix(in srgb, var(--sc-surface-strong) 90%, transparent) !important;
@@ -263,9 +267,13 @@ footer {{
 .mode-tabs .tab-wrapper > .tab-container[role="tablist"] {{
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
   gap: 6px;
   width: 100%;
-  overflow: hidden !important;
+  min-height: 54px;
+  padding: 2px !important;
+  overflow: visible !important;
+  box-sizing: border-box;
 }}
 
 .mode-tabs .tab-wrapper > .overflow-menu {{
@@ -275,6 +283,8 @@ footer {{
 .mode-tabs .tab-wrapper > .tab-container[role="tablist"] button {{
   min-width: 0 !important;
   min-height: 48px !important;
+  align-self: center;
+  margin: 0 !important;
   padding: 10px 12px !important;
   overflow: hidden;
   border: 0 !important;
@@ -1804,7 +1814,7 @@ body:has(#sc-ui-state[data-theme="light"]) {{
 .mode-tabs .tab-wrapper {{
   width: min(870px, 100%);
   margin-bottom: 34px !important;
-  padding: 7px !important;
+  padding: 9px !important;
   border-color: var(--sc-border-strong) !important;
   border-radius: 999px !important;
   background:
@@ -2714,15 +2724,20 @@ body:has(#sc-ui-state[data-theme="light"]) .companion-shell {{
 
   .mode-tabs .tab-wrapper {{
     display: flex !important;
-    align-items: stretch;
+    align-items: center;
     gap: 5px;
-    padding: 5px !important;
+    padding: 7px !important;
+    overflow: visible !important;
     border-radius: 18px !important;
   }}
 
   .mode-tabs .tab-wrapper > .tab-container[role="tablist"] {{
     flex: 1 1 auto;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: center;
+    row-gap: 5px;
+    padding: 2px !important;
+    overflow: visible !important;
   }}
 
   .mode-tabs .tab-wrapper > .tab-container[role="tablist"] button {{
